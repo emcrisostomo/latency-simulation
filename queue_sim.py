@@ -103,7 +103,7 @@ class Summary:
     mean_latency_ms: float
     mean_queue_ms: float
     mean_service_ms: float
-
+    cs2: float
 
 def percentile(sorted_values: List[float], p: float) -> float:
     """p in [0,100]. Returns linear-interpolated percentile."""
@@ -194,6 +194,16 @@ def summarize(
     mean_q = statistics.fmean(q_s) * 1000.0
     mean_serv = statistics.fmean(s_s) * 1000.0
 
+    # Service-time variability: C_s^2 = Var(S) / E[S]^2
+    # Use population variance since we have a full simulated sample.
+    if len(s_s) >= 2:
+        var_serv = statistics.pvariance(s_s)
+    else:
+        var_serv = 0.0
+    
+    mean_serv_s = statistics.fmean(s_s) if s_s else 0.0
+    cs2 = (var_serv / (mean_serv_s * mean_serv_s)) if mean_serv_s > 0 else float("nan")
+
     return Summary(
         k=k,
         n=n,
@@ -208,6 +218,7 @@ def summarize(
         mean_latency_ms=mean_lat,
         mean_queue_ms=mean_q,
         mean_service_ms=mean_serv,
+        cs2=cs2,
     )
 
 
@@ -218,6 +229,9 @@ def print_summary(s: Summary) -> None:
     print(f"E[S] target={s.mean_s*1000:.3f} ms  observed_mean_S={s.mean_service_ms:.3f} ms")
     print(f"lambda={s.lam:.3f} req/s")
     print(f"rho≈lambda*E[S]/k = {s.rho:.3f}")
+    print("")
+    print("Service-time variability:")
+    print(f"  C_s^2 = Var(S) / E[S]^2 = {s.cs2:.6f}")
     print("")
     print("Latency percentiles (ms):")
     print(f"  p50   {s.p50_ms:.3f}")
