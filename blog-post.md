@@ -37,19 +37,16 @@ $$
 \rho = \lambda E[S]
 $$
 
-This is not a choice.  
-It is a consequence.
+This is not a choice.  It is a consequence.
 
-You don’t “decide” to run at 65% CPU any more than you decide gravity applies today.  
-If load increases or service time grows, utilization increases. Full stop.
+You don’t “decide” to run at 65% CPU any more than you decide gravity applies today. If load increases or service time grows, utilization increases. Full stop.
 
 The real choice engineers have is not *whether* there is utilization, but:
 
-- whether that utilization is **safe**
-- or **dangerous**
+- Whether that utilization is **safe**.
+- Or **dangerous**.
 
-Safe utilization means short queues and predictable latency.  
-Dangerous utilization means long queues and exploding tail latency.
+Safe utilization means short queues and predictable latency.  Dangerous utilization means long queues and exploding tail latency.
 
 The difference is **variance**, not virtue.
 
