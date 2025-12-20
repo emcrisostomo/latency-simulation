@@ -92,12 +92,26 @@ $$
 
 Where:
 
-- $\rho$ is utilization
+- $\rho = \lambda E[SS]$ is utilization
 - $E[S]$ is mean service time
 - $c_a^2$ is arrival-time variability
 - $c_s^2$ is service-time variability
 
-This model applies to:
+Kingman's formula in an _approximation_ that is asymptotically exact when $\rho\rightarrow 1$ and it applies to the GI/G/1 queue:
+
+| Component | Meaning                                 |
+|-----------|-----------------------------------------|
+| GI        | General inter-arrival time distribution |
+| G         | General service time distribution       |
+
+In plain English, this is the queue length in a system with a single server where interarrival times have a general (meaning **arbitrary**) distribution and service times have a (different) general distribution.
+
+So, this model is valid for:
+
+* **Any arrival distribution:** Poisson, bursty, scheduled, etc.
+* **Any service distribution:** constant, log-normal, normal, heavy-tailed, etc.
+
+It is empirically _very accurate_ across a wide range of systems:
 
 - CPUs
 - thread pools
@@ -105,6 +119,63 @@ This model applies to:
 - message consumers
 
 In other words: **most backend bottlenecks**.
+
+> This generality is **exactly** why it’s powerful for software systems.
+
+---
+
+## Why is it so useful to software engineers?
+
+The reality of software systems is not so orderly and disciplined, and most production systems are not M/M/1:
+
+* Requests are **bursty**: customers are noisy, scheduled batch jobs start, retries happen, GC pauses.
+* Service times have a **high variance**: cache hits vs. misses, service time highly influence by the size of the data set being processed, I/O activity, slow downstreams.
+
+Kingman's law gives us a way to reason about **latency inflation** without pretending the our world is exponential.
+
+But what does this mean?
+
+_Latency inflation_ is the phenomenon where **observed latency** (by the customer) is much larger than the service time.  The gap between the two is latency inflation caused by _queueing_.
+
+> Latency inflation is not about slow code: it's about **waiting** before our code actually runs.
+
+Pretending the world is exponential means pretending our intuitions are correct, when they are based on a model which is too simple:
+
+- "But... average latency should scale linearly!"
+- "But... the CPU is not saturated, queues shouldn't be forming!"
+- "But... this variance is too high, something is broken!"
+
+This is _bad_ because it leads to:
+
+- **Overconfidence:** "Our average latency is low, we're fine!"
+- **Overcompensation:** "Latency variance is scary, let's scale up! (and keep utilisation low)"
+
+This _works_ (sort of)... at a huge cost, and little understanding.
+
+Kingman's law gives us a third path: **quantitative realism**.
+
+---
+
+## What Kingman's law really says, in plain English
+
+This is dense, I know. Let's try to look at the formula under a different light:
+
+$$ \text{Queueing delay} \propto \frac{\rho}{1 - \rho} \cdot (\text{arrival variability} + \text{service variability}) \cdot \text{average service time} $$
+
+There are three terms.
+Three **unavoidable facts**.
+Three levers.
+And only **one** of them is under direct operational control.
+
+1. **Utilization creates non-linear latency increase**: as $\rho\rightarrow 1$, waiting time _explodes_. Even with zero variance.
+2. **Variance amplifies waiting times**: variance doesn't _cause_ queues, variance _magnifies_ queues when utilization increases.
+3. **Latency variance is not a bug**: it's a _mathematical consequence_ of shared resources and utilization. You cannot remove variance without either:
+
+    * Overprovisioning
+    * Operating a system where arrivals and service times are deterministic (which is unrealistic).
+    * Eliminating shared resources (which is also unrealistic).
+
+Guess which one we're choosing?
 
 ---
 
@@ -211,35 +282,64 @@ This is the expected cost of efficiency.
 
 At 70% utilization:
 
-| Service variability $$c_s^2$$ | Interpretation                | Mean total latency |
-|-------------------------------|--------------------------------|--------------------|
-| 0.25                          | Stable service                | 78 ms              |
-| 1.00                          | Typical mixed workload        | 96 ms              |
-| 4.00                          | Heavy-tailed service          | 166 ms             |
+| Service variability $c_s^2$ | Interpretation         | Mean total latency |
+|-----------------------------|------------------------|--------------------|
+| 0.25                        | Stable service         | 78 ms              |
+| 1.00                        | Typical mixed workload | 96 ms              |
+| 4.00                        | Heavy-tailed service   | 166 ms             |
 
 Variance is not evil.  
 But it is not free.
 
 ---
 
-## Retries: Variance Multipliers in Disguise
+## Retries: Variance Multipliers in Disguise, and where they happen matters
 
-Retries feel safe. Mathematically, they are gasoline.
+Retries feel safe. Mathematically, they are **gasoline**.
+When engineers talk about "retries", they often lump together **two very different mechanisms** that affect queueing in different ways.
 
-Retries:
+### Caller-side retries (new arrivals)
 
-- increase arrival burstiness
-- amplify load during degradation
-- raise $$c_a^2$$ exactly when the system is weakest
+When a client times out and sends another request, the system observes a **new arrival**.
 
-This is why:
+From the queue’s perspective, this means:
 
-- naive retries destroy tail latency
-- exponential backoff works
-- jitter is mandatory, not optional
+- The arrival rate $\lambda$ increases.
+- Arrivals become burstier
+- Arrival-time variance $c_a^2$ grows.
 
-Retries don’t remove failures.  
-They **move them into the queue**.
+Even if each client’s retry logic is deterministic, retries often **synchronize at the system level**: many callers observe the same slowdown and retry **at the same time**. This correlation is what makes retry storms so destructive.
+
+This is why exponential backoff and jitter are **not** "nice to have". They are mechanisms to **break correlation** and keep arrival variability bounded.
+
+### In-service retries (longer service times)
+
+When a service retries work *inside* the request handling path, no new arrival is created, but the **service time increases**.
+
+From the queue’s perspective, this means:
+
+- The mean service time $E[S]$ grows.
+- The service-time variance $c_s^2$ widens.
+- Long requests block everything behind them.
+
+This manifests as heavier tails and p99 inflation even when arrivals are smooth.
+
+### Where determinism fits in
+
+Determinism does not eliminate cost: it **bounds it**.
+
+- Deterministic retries cap variance.
+- Correlated or unbounded retries amplify it.
+
+The key distinction is not that "retries are bad", but **where the retry occurs and how correlated it is**.
+
+A useful rule of thumb is the following:
+
+> **Retries outside the queue attack arrivals.  
+> Retries inside the queue stretch the tail.**
+
+Kingman's law does not forbid us to use retries.  
+It simply tells you **which bill they add to**.
 
 ---
 
@@ -252,16 +352,16 @@ They relocate it.
 - Thread pools have visible queues
 - Async systems have implicit queues (buffers, schedulers, event loops)
 
-Kingman applies equally to:
+Kingman's law applies equally to:
 
-- blocking threads
-- async pipelines
-- coroutines
-- virtual threads
+- Blocking threads.
+- Asynchronous pipelines.
+- Coroutines.
+- Virtual threads.
 
-If a resource is finite and shared, it queues.
+If a resource is finite and shared, it queues. Full stop.
 
-> **Async changes how you pay for waiting — not whether you pay.**
+> **Async changes how you pay for waiting, not whether you pay.**
 
 ---
 
@@ -301,7 +401,7 @@ You move from:
 
 to:
 
-> “We’re at 78% utilization with high variance — this is expected.”
+> “We’re at 78% utilization with high variance. This is expected.”
 
 That’s not lowering standards.  
 That’s raising understanding.
@@ -310,12 +410,12 @@ That’s raising understanding.
 
 ## Final Thought
 
-Latency variance is not a sign your system is broken.
+Latency variance is not a sign that our system is broken.
 
-It is a sign your system is **alive, shared, and doing useful work**.
+It is a sign that our system is **alive, shared, and doing useful work**.
 
 The goal of engineering is not to eliminate variance.  
-It is to understand it well enough that it stops surprising you.
+Our job is to understand it well enough that it stops surprising us.
 
 When variance surprises you, you page people.  
 When it doesn’t, you plan.
