@@ -157,7 +157,7 @@ $$
 
 Where:
 
-- $S_{\text{slow}} = S_{\text{fast}} \times \text{slow\_mult}$
+- $S_{\text{slow}} = S_{\text{fast}} \times \text{slow\\_mult}$
 - $S_{\text{fast}}$ is chosen so that $E[S]$ is preserved
 
 This models the most common real-world pattern:
