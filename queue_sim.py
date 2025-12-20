@@ -5,9 +5,9 @@ Discrete-event queue simulator: M/G/k with Poisson arrivals.
 Focus: show how utilization (rho) and service-time variability inflate tail latency.
 
 Usage examples:
-  python queue_sim.py --k 1 --mean-ms 10 --rho 0.8 --dist const --n 200000
-  python queue_sim.py --k 1 --mean-ms 10 --rho 0.8 --dist mixture --mix-p 0.01 --slow-mult 100 --n 200000
-  python queue_sim.py --k 4 --mean-ms 10 --rho 0.85 --dist lognormal --lognorm-sigma 1.2 --n 300000 --csv out.csv
+  python queue_sim.py --k 1 --mean-ms 10 --rho 0.8  --dist const     --n 200000
+  python queue_sim.py --k 1 --mean-ms 10 --rho 0.8  --dist mixture   --n 200000 --mix-p 0.01 --slow-mult 100 
+  python queue_sim.py --k 4 --mean-ms 10 --rho 0.85 --dist lognormal --n 300000 --lognorm-sigma 1.2  --csv out.csv
 """
 
 from __future__ import annotations
