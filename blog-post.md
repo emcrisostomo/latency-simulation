@@ -160,7 +160,9 @@ Kingman's law gives us a third path: **quantitative realism**.
 
 This is dense, I know. Let's try to look at the formula under a different light:
 
-$$ \text{Queueing delay} \propto \frac{\rho}{1 - \rho} \cdot (\text{arrival variability} + \text{service variability}) \cdot \text{average service time} $$
+$$
+\text{Queueing delay} \propto \frac{\rho}{1 - \rho} \cdot (\text{arrival variability} + \text{service variability}) \cdot \text{average service time}
+$$
 
 There are three terms.
 Three **unavoidable facts**.
