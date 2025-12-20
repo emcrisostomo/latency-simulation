@@ -263,11 +263,7 @@ From production measurements:
 So service-time variability is:
 
 $$
-c_s^2
-=
-\left(\frac{20}{20}\right)^2
-=
-1
+c_s^2 = (\frac{20}{20})^2 = 1
 $$
 
 Arrivals are bursty (very normal in real systems):
