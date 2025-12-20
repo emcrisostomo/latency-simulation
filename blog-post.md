@@ -135,7 +135,7 @@ _Latency inflation_ is the phenomenon where **observed latency** (by the custome
 
 > Latency inflation is not about slow code: it's about **waiting** before our code actually runs.
 
-Pretending the world is exponential means pretending our intuitions are correct, when they are based on a model which is too simple:
+Pretending the world is exponential means pretending our intuitions are correct when they are based on a model which is too simple:
 
 - "But... average latency should scale linearly!"
 - "But... the CPU is not saturated, queues shouldn't be forming!"
@@ -284,8 +284,7 @@ $$
 
 At 80% utilization, the *queue* dominates the latency.
 
-Nothing is broken.  
-This is the expected cost of efficiency.
+Nothing is broken. **This is the expected cost of efficiency.**
 
 ---
 
@@ -299,8 +298,7 @@ At 70% utilization:
 | 1.00                        | Typical mixed workload | 96 ms              |
 | 4.00                        | Heavy-tailed service   | 166 ms             |
 
-Variance is not evil.  
-But it is not free.
+Variance is not evil. **But it is not free.**
 
 ---
 
