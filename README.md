@@ -38,23 +38,23 @@ This corresponds to an **M/G/k** queue in classical queueing theory.
 
 The key parameters are:
 
-| Symbol        | Meaning                            |
-|---------------|------------------------------------|
-| \( \lambda \) | Arrival rate (requests per second) |
-| \( S \)       | Service time random variable       |
-| \( E[S] \)    | Mean service time                  |
-| \( k \)       | Number of workers / servers        |
-| \( \rho \)    | Utilization                        |
+| Symbol    | Meaning                            |
+| --------- | ---------------------------------- |
+| $\lambda$ | Arrival rate (requests per second) |
+| $S$       | Service time random variable       |
+| $E[S]$    | Mean service time                  |
+| $k$       | Number of workers / servers        |
+| $\rho$    | Utilization                        |
 
 Utilization is defined as:
 
-\[
+$$
 \rho = \frac{\lambda \cdot E[S]}{k}
-\]
+$$
 
 **Important:**  
 In these simulations, *utilization is not tuned indirectly*.  
-You choose \( \rho \), and the simulator derives \( \lambda \) from it.
+You choose $\rho$, and the simulator derives $\lambda$ from it.
 
 ---
 
@@ -67,15 +67,15 @@ A central thesis of this repo is:
 
 If:
 
-- requests arrive at rate \( \lambda \)
-- each request requires \( E[S] \) seconds of work
-- you have \( k \) workers
+- requests arrive at rate $\lambda$
+- each request requires $E[S]$ seconds of work
+- you have $k$ workers
 
 then utilization is fixed by physics:
 
-\[
+$$
 \rho = \lambda E[S] / k
-\]
+$$
 
 Everything else, queueing, waiting time, tail latency, follows.
 
@@ -98,16 +98,16 @@ This gives clean, reproducible results without OS noise, GC, or scheduler artifa
 
 ## Supported service-time distributions
 
-All distributions are parameterized to have **the same mean service time** \( E[S] \).  
+All distributions are parameterized to have **the same mean service time** $E[S]$.  
 Any difference in latency comes purely from **variance and tail behavior**.
 
 ### 1. Constant (`const`)
 
 Deterministic service time.
 
-\[
+$$
 S = E[S]
-\]
+$$
 
 - Zero variance
 - Best possible case
@@ -119,11 +119,11 @@ S = E[S]
 
 Memoryless service time.
 
-\[
+$$
 S \sim \text{Exponential}(1/E[S])
-\]
+$$
 
-- Coefficient of variation \( C_s^2 = 1 \)
+- Coefficient of variation $C_s^2 = 1$
 - Classic M/M/k model
 - Often used implicitly (and incorrectly) in intuition
 
@@ -133,9 +133,9 @@ S \sim \text{Exponential}(1/E[S])
 
 Heavy-tailed service time.
 
-\[
+$$
 S \sim \text{LogNormal}(\mu, \sigma)
-\]
+$$
 
 - Mean preserved by construction
 - Variance controlled via `sigma`
@@ -147,18 +147,18 @@ S \sim \text{LogNormal}(\mu, \sigma)
 
 A **two-point mixture distribution**:
 
-\[
+$$
 S =
 \begin{cases}
 S_{\text{fast}} & \text{with probability } 1 - p \\
 S_{\text{slow}} & \text{with probability } p
 \end{cases}
-\]
+$$
 
 Where:
 
-- \( S_{\text{slow}} = S_{\text{fast}} \times \text{slow\_mult} \)
-- \( S_{\text{fast}} \) is chosen so that \( E[S] \) is preserved
+- $S_{\text{slow}} = S_{\text{fast}} \times \text{slow\_mult}$
+- $S_{\text{fast}}$ is chosen so that $E[S]$ is preserved
 
 This models the most common real-world pattern:
 
@@ -181,20 +181,20 @@ Examples include:
 
 Kingman’s approximation for an M/G/1 queue:
 
-\[
+$$
 E[W_q] \approx
 \frac{\rho}{1 - \rho}
 \cdot
 \frac{1 + C_s^2}{2}
 \cdot
 E[S]
-\]
+$$
 
 Where:
 
-\[
+$$
 C_s^2 = \frac{\mathrm{Var}(S)}{E[S]^2}
-\]
+$$
 
 This equation explains almost everything you observe in production:
 
@@ -210,14 +210,14 @@ The simulations in this repo are simply this equation, made visible.
 
 The sweep plots:
 
-- x-axis: utilization \( \rho \)
+- x-axis: utilization $\rho$
 - y-axis: latency (p50, p95, p99, p99.9)
 
 What you should notice:
 
 - p50 remains deceptively flat
 - p95 bends upward
-- p99 and p99.9 diverge violently as \( \rho \to 1 \)
+- p99 and p99.9 diverge violently as $\rho \to 1$
 - higher-variance distributions blow up *earlier*
 
 Nothing is broken.
@@ -239,7 +239,7 @@ Core discrete-event simulator.
 
 ### `sweep_plot.py`
 
-Runs parameter sweeps over utilization \( \rho \).
+Runs parameter sweeps over utilization $\rho$.
 
 - generates CSV data
 - produces matplotlib plots suitable for blog posts
