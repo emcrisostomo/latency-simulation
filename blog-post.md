@@ -66,8 +66,7 @@ If a system:
 
 then queues are inevitable.
 
-This is not a software problem.  
-It is queueing theory.
+This is not a software problem. It is queueing theory.
 
 And the most useful tool we have to reason about it is **Kingman’s approximation**.
 
@@ -121,9 +120,9 @@ In other words: **most backend bottlenecks**.
 
 ---
 
-## Why is it so useful to software engineers?
+## Why Is It So Useful to Software Engineers?
 
-The reality of software systems is not so orderly and disciplined, and most production systems are not M/M/1:
+The reality of software systems is not so orderly and disciplined, and most production systems are not M/M/1 queues:
 
 * Requests are **bursty**: customers are noisy, scheduled batch jobs start, retries happen, GC pauses.
 * Service times have a **high variance**: cache hits vs. misses, service time highly influence by the size of the data set being processed, I/O activity, slow downstreams.
@@ -153,7 +152,7 @@ Kingman's law gives us a third path: **quantitative realism**.
 
 ---
 
-## What Kingman's law really says, in plain English
+## What Kingman's Law Really Says, in Plain English
 
 This is dense, I know. Let's try to look at the formula under a different light:
 
@@ -186,48 +185,65 @@ $$
 \frac{\rho}{1 - \rho}
 $$
 
-It grows slowly… until it doesn’t.
+It grows slowly... until it doesn’t.
 
 | Utilization | Queueing factor |
 |-------------|-----------------|
+| 0.10        | 0.11            |
+| 0.20        | 0.25            |
 | 0.30        | 0.43            |
+| 0.40        | 0.67            |
 | 0.50        | 1.00            |
+| 0.55        | 1.22            |
+| 0.60        | 1.50            |
 | 0.65        | 1.86            |
+| 0.70        | 2.33            |
 | 0.75        | 3.00            |
+| 0.80        | 4.00            |
 | 0.85        | 5.67            |
 | 0.90        | 9.00            |
 
 This is why:
 
-- 60 → 70% feels fine
-- 70 → 80% feels scary
-- 80 → 85% feels like a cliff
+- $[60,70]$% feels fine.
+- $[70,80]$% feels scary.
+- $[80,90]$% feels like a cliff.
 
-Nothing broke.  
-**The math just became visible.**
+Nothing broke. **The math just became visible.**
+
+A look at the plotted values for $\rho/(1-\rho)$ also gives you an idea of why a common value for the target utilization is around 60% or 70%, right at the "elbow" after the end of the linear zone.
+
+![Queueing factor vs utilization](queueing-factor-vs-utilization.png)
+
 
 ---
 
-## “But Our p99 Exploded”
+## "But Our p99 Exploded!"
 
 Yes. Of course it did.
 
-Kingman estimates the *mean*, but queueing does not politely stay in the mean.
+Kingman's law estimates the *mean*, but queueing does not politely stay in the mean.
 
-Queueing:
+The effects of queueing are:
 
-- stretches the right tail
-- amplifies bursts
-- punishes long service times
+- Stretching the right tail.
+- Amplifying bursts.
+- Punishing long service times.
 
 This is why:
 
-- p99 degrades before p50 looks bad
-- tail latency becomes noisy under load
-- systems “feel flaky” long before averages change
+- p99 degrades before p50 looks bad.
+- Tail latency becomes noisy under load.
+- Systems “feel flaky” **long** before averages change.
 
-This is not a failure of the model.  
-It is exactly what the model predicts.
+The following picture show the behaviour of various percentiles during an utilization sweep from 0.2 to 0.9 for a load with a bimodal service time distribution (rare-slow) where the average service time is $E[S]=10$ ms, with 200.000 requests simulated. When $\rho=0.6$:
+
+- The p50 has barely moved from $E[S]=10$ ms.
+- The p99 has skyrocketed at $140\cdot E[S]$.
+
+![Percentiles with a mixture dist during an utilisation sweep](sweep_mix.png)
+
+This is not a failure of the model. It is exactly what the model predicts.
 
 > **Tail latency is a utilization problem, not a mystery.**
 
