@@ -92,12 +92,12 @@ $$
 
 Where:
 
-- $\rho = \lambda E[SS]$ is utilization
-- $E[S]$ is mean service time
-- $c_a^2$ is arrival-time variability
-- $c_s^2$ is service-time variability
+- $\rho = \lambda E[S]$ is utilization.
+- $E[S]$ is mean service time.
+- $c_a^2$ is arrival-time variability.
+- $c_s^2$ is service-time variability.
 
-Kingman's formula in an _approximation_ that is asymptotically exact when $\rho\rightarrow 1$ and it applies to the GI/G/1 queue:
+Kingman's formula in an *approximation* that is asymptotically exact when $\rho\rightarrow 1$ and it applies to the GI/G/1 queue:
 
 | Component | Meaning                                 |
 |-----------|-----------------------------------------|
