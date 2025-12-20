@@ -92,10 +92,10 @@ $$
 
 Where:
 
-- $$\rho$$ is utilization
-- $$E[S]$$ is mean service time
-- $$c_a^2$$ is arrival-time variability
-- $$c_s^2$$ is service-time variability
+- $\rho$ is utilization
+- $E[S]$ is mean service time
+- $c_a^2$ is arrival-time variability
+- $c_s^2$ is service-time variability
 
 This model applies to:
 
