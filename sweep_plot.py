@@ -36,6 +36,7 @@ class Point:
     p999_ms: float
     mean_ms: float
     mean_q_ms: float
+    cs2: float
 
 
 def frange(start: float, stop: float, step: float) -> List[float]:
@@ -95,6 +96,7 @@ def run_sweep(args) -> List[Point]:
                 p999_ms=summ.p999_ms,
                 mean_ms=summ.mean_latency_ms,
                 mean_q_ms=summ.mean_queue_ms,
+                cs2=summ.cs2,
             )
         )
 
@@ -114,8 +116,10 @@ def write_csv(path: str, points: List[Point], meta: Dict[str, str]) -> None:
         for k, v in meta.items():
             w.writerow([f"# {k}={v}"])
         w.writerow(["rho", "p50_ms", "p95_ms", "p99_ms", "p999_ms", "mean_ms", "mean_queue_ms"])
+        w.writerow(["rho", "cs2", "p50_ms", "p95_ms", "p99_ms", "p999_ms", "mean_ms", "mean_queue_ms"])
         for p in points:
             w.writerow([p.rho, p.p50_ms, p.p95_ms, p.p99_ms, p.p999_ms, p.mean_ms, p.mean_q_ms])
+            w.writerow([p.rho, p.cs2, p.p50_ms, p.p95_ms, p.p99_ms, p.p999_ms, p.mean_ms, p.mean_q_ms])
 
 
 def plot(points: List[Point], title: str, out_path: str) -> None:
