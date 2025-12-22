@@ -100,12 +100,12 @@ Kingman's formula is an *approximation* that is asymptotically exact when $\rho\
 | GI        | General inter-arrival time distribution |
 | G         | General service time distribution       |
 
-In plain English, this is the queue length in a system with a single server where interarrival times have a general (meaning **arbitrary**) distribution and service times have a (different) general distribution.
+In plain English, this is the waiting time in queue in a system with a single server where interarrival times follow a general (non-exponential) distribution and service times follow a (different) general distribution.
 
 So, this model is valid for:
 
-* **Any arrival distribution:** Poisson, bursty, scheduled, etc.
-* **Any service distribution:** constant, log-normal, normal, heavy-tailed, etc.
+- **Many arrival distributions:** Poisson, bursty, scheduled, etc., as long as interarrival times are i.i.d. with finite variance.
+- **Many service distributions:** constant, log-normal, normal, etc., as long as service times are i.i.d. with finite variance.
 
 It is empirically _very accurate_ across a wide range of systems:
 
