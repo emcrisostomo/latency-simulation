@@ -45,6 +45,10 @@ run-sweep-for-each-distribution: dependencies-install
 	$(VENV_PATH)/python queue_sim.py --dist mixture   --rho 0.8 --mean-ms 10 --n 200000 --mix-p 0.01        --slow-mult 100 
 	$(VENV_PATH)/python queue_sim.py --dist lognormal --rho 0.8 --mean-ms 10 --n 200000 --lognorm-sigma 1.2
 
+.PHONY: run-cs-sweep-plot
+run-cs-sweep-plot:
+	$(VENV_PATH)/python sweep_plot.py --sweep cs --dist lognormal --rho 0.7 --cs-min 0.5 --cs-max 4.0 --cs-step 0.1 --n 500000 --out sweep_cs.png
+
 .PHONY: pdf
 pdf:
 	pandoc -o blog-post.pdf blog-post.md --from markdown --listings --toc --toc-depth=2 --number-sections

@@ -236,6 +236,10 @@ At 70% utilization:
 
 Variance is not evil. **But it is not free.**
 
+Here is the same idea shown as a sweep over $C_s$ (the coefficient of variation). We hold $\rho = 0.70$ and $E[S]=10$ ms fixed, and measure mean queue delay as service-time variability increases. The jitter in the curve is real Monte Carlo noise from the simulation, and it is part of the story: even the *mean* gets tugged around once tails get heavy.
+
+![Mean queue delay vs service-time variability](sweep_cs.png)
+
 ## Retries: Variance Multipliers in Disguise, and Where They Happen Matters
 
 Retries feel safe. Mathematically, they are **gasoline**. But "retries" is really two different mechanisms with different queueing effects.

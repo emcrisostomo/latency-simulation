@@ -25,6 +25,16 @@ from typing import Callable, List, Optional, Tuple
 # Distributions
 # --------------------------
 
+def lognorm_sigma_from_cs2(cs2: float) -> float:
+    """
+    Convert service-time variability C_s^2 to lognormal sigma.
+
+    For lognormal, C_s^2 = exp(sigma^2) - 1.
+    """
+    if cs2 < 0:
+        raise ValueError("cs2 must be >= 0")
+    return math.sqrt(math.log(1.0 + cs2))
+
 def service_sampler(
     dist: str,
     mean_s: float,
