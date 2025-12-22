@@ -25,7 +25,7 @@ If your system:
 - Receives work at rate $\lambda$ (requests per second).
 - Requires $E[S]$ CPU-seconds per request.
 
-then utilization is:
+Then utilization is:
 
 $$
 \rho = \lambda E[S]
@@ -155,9 +155,9 @@ It grows slowly... until it doesn't.
 
 This is why:
 
-- 60–70% Feels fine.
-- 70–80% Feels scary.
-- 80–90% Feels like a cliff.
+- 60–70% feels fine.
+- 70–80% feels scary.
+- 80–90% feels like a cliff.
 
 Nothing broke. **The math just became visible.**
 
@@ -259,7 +259,7 @@ From the queue's perspective:
 
 Even if each client's retry logic is deterministic, retries often **synchronize at the system level**: many callers observe the same slowdown and retry at the same time. That correlation is what makes retry storms so destructive.
 
-This is why exponential backoff and jitter are not "nice to have." They break correlation and keep arrival variability bounded.
+This is why exponential backoff and jitter are not "nice to have". They break correlation and keep arrival variability bounded.
 
 ### In-service retries (longer service times)
 
@@ -312,7 +312,7 @@ A sane capacity-planning loop looks like this:
 
 Not:
 
-> "Let's stay under 20% CPU."
+> "Let's stay under 20% CPU".
 
 But:
 
@@ -335,7 +335,7 @@ You move from:
 
 to:
 
-> "We're at 78% utilization with high variance. This is expected."
+> "We're at 78% utilization with high variance. This is expected".
 
 That is not lowering standards. It is raising understanding.
 
