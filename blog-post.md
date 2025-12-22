@@ -100,12 +100,12 @@ Kingman's formula is an *approximation* that is asymptotically exact when $\rho\
 | GI        | General inter-arrival time distribution |
 | G         | General service time distribution       |
 
-In plain English, this is the waiting time in queue in a system with a single server where interarrival times follow a general (non-exponential) distribution and service times follow a (different) general distribution.
+In plain English, this is the mean waiting time in queue in a system with a single server where interarrival times follow a general (non-exponential) distribution and service times follow a (different) general distribution.
 
 So, this model is valid for:
 
-- **Many arrival distributions:** Poisson, bursty, scheduled, etc., as long as interarrival times are i.i.d. with finite variance.
-- **Many service distributions:** constant, log-normal, normal, etc., as long as service times are i.i.d. with finite variance.
+- **Many arrival distributions:** Poisson, bursty, scheduled, etc., as long as interarrival times are i.i.d. with finite variance (independent and not ultra-heavy-tailed).
+- **Many service distributions:** constant, log-normal, normal, etc., as long as service times are i.i.d. with finite variance (independent and not ultra-heavy-tailed).
 
 It is empirically _very accurate_ across a wide range of systems:
 
@@ -127,7 +127,7 @@ The reality of software systems is not so orderly and disciplined, and most prod
 * Requests are **bursty**: customers are noisy, scheduled batch jobs start, retries happen, GC pauses.
 * Service times have a **high variance**: cache hits vs. misses, service time is highly influenced by the size of the data set being processed, I/O activity, slow downstreams.
 
-*Latency inflation* is the phenomenon where **observed latency** (by the customer) is much larger than the service time. The gap between the two is latency inflation caused by *queueing*.
+*Latency inflation* is the phenomenon where **observed latency** (by the customer) is much larger than the service time. That gap is latency inflation caused by *queueing*.
 
 Kingman's law gives us a way to reason about **latency inflation** without pretending our world is exponential.
 
@@ -236,7 +236,7 @@ This is why:
 - Tail latency becomes noisy under load.
 - Systems “feel flaky” **long** before averages change.
 
-The following picture shows the behaviour of various percentiles during an utilization sweep from 0.2 to 0.9 for a load with a bimodal service time distribution (rare-slow) where the average service time is $E[S]=10$ ms, with 200.000 requests simulated. When $\rho=0.6$:
+The following picture shows the behaviour of various percentiles during a utilization sweep from 0.2 to 0.9 for a load with a bimodal service time distribution (rare-slow) where the average service time is $E[S]=10$ ms, with 200.000 requests simulated. When $\rho=0.6$:
 
 - The p50 has barely moved from $E[S]=10$ ms.
 - The p99 has skyrocketed at $140\cdot E[S]$.
@@ -304,7 +304,7 @@ Variance is not evil. **But it is not free.**
 
 ---
 
-## Retries: Variance Multipliers in Disguise, and where they happen matters
+## Retries: Variance Multipliers in Disguise, and Where They Happen Matters
 
 Retries feel safe. Mathematically, they are **gasoline**.
 When engineers talk about "retries", they often lump together **two very different mechanisms** that affect queueing in different ways.
