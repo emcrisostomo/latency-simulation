@@ -6,7 +6,7 @@ If you spend enough time on-call, you've heard the line:
 
 > "Latency is noisy. Something is wrong. We need to lower utilization. Scale up!"
 
-The intuition is understandable. When p95 and p99 wobble, we reach for the knob we can see: CPU. Many teams respond by keeping systems at 10–20% utilization, just to stay far away from queues.
+The intuition is understandable. When p95 and p99 wobble, we reach for the knob we can see: CPU. Many teams respond by keeping systems at 10-20% utilization, just to stay far away from queues.
 
 This post makes a different claim:
 
