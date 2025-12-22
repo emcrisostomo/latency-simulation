@@ -4,7 +4,7 @@
 
 If you spend enough time on-call, you've heard the line:
 
-> "Latency is noisy. Something is wrong. We need to lower utilization. Scale up!”
+> "Latency is noisy. Something is wrong. We need to lower utilization. Scale up!"
 
 The intuition is understandable. When p95 and p99 wobble, we reach for the knob we can see: CPU. Many teams respond by keeping systems at 10–20% utilization, just to stay far away from queues.
 
@@ -105,8 +105,8 @@ Kingman's law gives us a way to reason about that gap without pretending our wor
 
 When we ignore this, we tend to swing between two bad instincts:
 
-- **Overconfidence:** "Average latency is low, we're fine”.
-- **Overcompensation:** "Variance is scary, let's scale up and keep utilization low”.
+- **Overconfidence:** "Average latency is low, we're fine".
+- **Overcompensation:** "Variance is scary, let's scale up and keep utilization low".
 
 Both are expensive. Kingman gives us a third path: **quantitative realism**.
 
@@ -166,7 +166,7 @@ A look at the plotted values for $\rho/(1-\rho)$ also shows why a common utiliza
 ![Queueing factor vs utilization](queueing-factor-vs-utilization.png)
 
 
-## "But Our p99 Exploded!”
+## "But Our p99 Exploded!"
 
 Yes. Of course it did.
 
@@ -180,7 +180,7 @@ That is why:
 
 - p99 degrades before p50 looks bad.
 - Tail latency becomes noisy under load.
-- Systems "feel flaky” **long** before averages move.
+- Systems "feel flaky" **long** before averages move.
 
 The following picture shows the behavior of various percentiles during a utilization sweep from 0.2 to 0.9 for a bimodal (rare-slow) service time distribution where $E[S]=10$ ms, with 200,000 requests simulated. When $\rho=0.6$:
 
@@ -245,7 +245,7 @@ Variance is not evil. **But it is not free.**
 
 ## Retries: Variance Multipliers in Disguise, and Where They Happen Matters
 
-Retries feel safe. Mathematically, they are **gasoline**. But "retries” is really two different mechanisms with different queueing effects.
+Retries feel safe. Mathematically, they are **gasoline**. But "retries" is really two different mechanisms with different queueing effects.
 
 ### Caller-side retries (new arrivals)
 
@@ -259,7 +259,7 @@ From the queue's perspective:
 
 Even if each client's retry logic is deterministic, retries often **synchronize at the system level**: many callers observe the same slowdown and retry at the same time. That correlation is what makes retry storms so destructive.
 
-This is why exponential backoff and jitter are not "nice to have.” They break correlation and keep arrival variability bounded.
+This is why exponential backoff and jitter are not "nice to have." They break correlation and keep arrival variability bounded.
 
 ### In-service retries (longer service times)
 
@@ -312,11 +312,11 @@ A sane capacity-planning loop looks like this:
 
 Not:
 
-> "Let's stay under 20% CPU.”
+> "Let's stay under 20% CPU."
 
 But:
 
-> "At 75% utilization, expected queueing delay is 3× service time. Is that acceptable?”
+> "At 75% utilization, expected queueing delay is 3× service time. Is that acceptable?"
 
 That is engineering.
 
@@ -331,11 +331,11 @@ Once teams internalize this:
 
 You move from:
 
-> "Why is prod flaky?”
+> "Why is prod flaky?"
 
 to:
 
-> "We're at 78% utilization with high variance. This is expected.”
+> "We're at 78% utilization with high variance. This is expected."
 
 That is not lowering standards. It is raising understanding.
 
