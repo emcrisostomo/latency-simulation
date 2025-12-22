@@ -21,7 +21,7 @@ And not only is it expected — it is **predictable, quantifiable, and plannable
 
 ## Utilization Is Not a Tuning Knob
 
-There is a subtle but important misunderstanding in how we talk about utilization.
+There is a *subtle* but important misunderstanding in how we talk about utilization.
 
 Utilization is not a parameter you tune.  
 It is an **accounting identity**.
@@ -122,7 +122,7 @@ In other words: **most backend bottlenecks**.
 
 ## Why Is It So Useful to Software Engineers?
 
-The reality of software systems is not so orderly and disciplined, and most production systems are not M/M/1 queues:
+The reality of software systems is not orderly or disciplined, and most production systems are not M/M/1 queues:
 
 * Requests are **bursty**: customers are noisy, scheduled batch jobs start, retries happen, GC pauses.
 * Service times have a **high variance**: cache hits vs. misses, service time is highly influenced by the size of the data set being processed, I/O activity, slow downstreams.
@@ -146,7 +146,7 @@ This is _bad_ because it leads to:
 - **Overconfidence:** "Our average latency is low, we're fine!"
 - **Overcompensation:** "Latency variance is scary, let's scale up! (and keep utilization low)"
 
-This _works_ (sort of)... at a huge cost, and little understanding.
+This _works_ (sort of)... at a huge cost and little understanding.
 
 Kingman's law gives us a third path: **quantitative realism**.
 
@@ -241,7 +241,7 @@ The following picture shows the behavior of various percentiles during a utiliza
 - The p50 has barely moved from $E[S]=10$ ms.
 - The p99 has skyrocketed at $140\cdot E[S]$.
 
-![Percentiles with a mixture dist during an utilization sweep](sweep_mix.png)
+![Percentiles with a mixture distribution during a utilization sweep](sweep_mix.png)
 
 This is not a failure of the model. It is exactly what the model predicts.
 
