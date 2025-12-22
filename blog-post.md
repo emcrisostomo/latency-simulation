@@ -37,7 +37,7 @@ $$
 \rho = \lambda E[S]
 $$
 
-This is not a choice.  It is a consequence.
+This is not a choice. It is a consequence.
 
 You don’t “decide” to run at 65% CPU any more than you decide that gravity exists today. If load increases or service time grows, utilization increases. Full stop.
 
@@ -46,7 +46,7 @@ The real choice engineers have is not *whether* there is utilization, but:
 - Whether that utilization is **safe**.
 - Or **dangerous**.
 
-Safe utilization means short queues and predictable latency.  Dangerous utilization means long queues and exploding tail latency.
+Safe utilization means short queues and predictable latency. Dangerous utilization means long queues and exploding tail latency.
 
 The difference is **variance**, not virtue.
 
@@ -100,7 +100,7 @@ Kingman's formula is an *approximation* that is asymptotically exact when $\rho\
 | GI        | General inter-arrival time distribution |
 | G         | General service time distribution       |
 
-In plain English, this is the mean waiting time in queue in a system with a single server where interarrival times follow a general (non-exponential) distribution and service times follow a (different) general distribution.
+In plain English, this is the mean waiting time in queue for a system with a single server where interarrival times follow a general (not necessarily exponential) distribution and service times follow a (different) general distribution.
 
 So, this model is valid for:
 
@@ -236,7 +236,7 @@ This is why:
 - Tail latency becomes noisy under load.
 - Systems “feel flaky” **long** before averages change.
 
-The following picture shows the behaviour of various percentiles during a utilization sweep from 0.2 to 0.9 for a load with a bimodal service time distribution (rare-slow) where the average service time is $E[S]=10$ ms, with 200,000 requests simulated. When $\rho=0.6$:
+The following picture shows the behavior of various percentiles during a utilization sweep from 0.2 to 0.9 for a load with a bimodal service time distribution (rare-slow) where the average service time is $E[S]=10$ ms, with 200,000 requests simulated. When $\rho=0.6$:
 
 - The p50 has barely moved from $E[S]=10$ ms.
 - The p99 has skyrocketed at $140\cdot E[S]$.
