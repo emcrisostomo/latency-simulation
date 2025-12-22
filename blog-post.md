@@ -284,6 +284,12 @@ A useful rule of thumb:
 
 Kingman's law does not forbid retries. It just tells you **which bill they add to**.
 
+To make this concrete, I simulated a toy comparison with $\rho$ swept and a 10% retry probability. Caller-side retries are modeled as 10% more arrivals; in-service retries are modeled as a 10% chance of doing the same work twice, so the mean utilization increase matches. The curves are close, which is the point: even a "fair" comparison produces a noticeable tail penalty.
+
+![Caller-side vs in-service retries (p99 vs utilization)](sweep_retries.png)
+
+This picture is likely an *underestimate* of real service-side impact. Real in-service retries often cost more than the original attempt, and real systems add extra variance (cache misses, downstream contention, I/O jitter) that make the tail fatter than this clean model.
+
 ## Thread Pools vs Async: Physics Still Applies
 
 Async systems do not eliminate queueing. They relocate it.

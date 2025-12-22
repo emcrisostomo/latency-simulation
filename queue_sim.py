@@ -35,6 +35,28 @@ def lognorm_sigma_from_cs2(cs2: float) -> float:
         raise ValueError("cs2 must be >= 0")
     return math.sqrt(math.log(1.0 + cs2))
 
+
+def inservice_retry_sampler(
+    base_sampler: Callable[[], float],
+    retry_p: float,
+    rng: random.Random,
+) -> Callable[[], float]:
+    """
+    Return a sampler that retries service with probability retry_p.
+
+    The retry is modeled as doing another full service time sample.
+    """
+    if not (0.0 <= retry_p < 1.0):
+        raise ValueError("retry_p must be in [0,1)")
+
+    def sample() -> float:
+        s = base_sampler()
+        if rng.random() < retry_p:
+            s += base_sampler()
+        return s
+
+    return sample
+
 def service_sampler(
     dist: str,
     mean_s: float,
