@@ -44,3 +44,7 @@ run-sweep-for-each-distribution: dependencies-install
 	$(VENV_PATH)/python queue_sim.py --dist exp       --rho 0.8 --mean-ms 10 --n 200000
 	$(VENV_PATH)/python queue_sim.py --dist mixture   --rho 0.8 --mean-ms 10 --n 200000 --mix-p 0.01        --slow-mult 100 
 	$(VENV_PATH)/python queue_sim.py --dist lognormal --rho 0.8 --mean-ms 10 --n 200000 --lognorm-sigma 1.2
+
+.PHONY: pdf
+pdf:
+	pandoc -o blog-post.pdf blog-post.md --from markdown --listings --toc --toc-depth=2 --number-sections
