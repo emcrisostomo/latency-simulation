@@ -15,7 +15,6 @@ This post makes a different claim:
 
 Not only is it expected, it is predictable, quantifiable, and plannable.
 
-
 ## Utilization Is Not a Tuning Knob
 
 Utilization is not something you dial in. It is an accounting identity.
@@ -37,7 +36,6 @@ The real choice is not *whether* there is utilization, but whether that utilizat
 
 Safe utilization means short queues and predictable latency. Dangerous utilization means long queues and explosive tail latency. The difference is **variance**, not virtue.
 
-
 ## Why Variance Shows Up Even in Healthy Systems
 
 Here is the uncomfortable truth:
@@ -47,7 +45,6 @@ Here is the uncomfortable truth:
 If a system shares CPU, threads, or connections, runs at non-zero utilization, and sees non-zero variability, queues are inevitable. This is not a software problem. It is queueing theory.
 
 The most useful tool we have for reasoning about this in real systems is **Kingman's approximation**.
-
 
 ## Kingman's Formula (The One You Actually Need)
 
@@ -165,7 +162,6 @@ A look at the plotted values for $\rho/(1-\rho)$ also shows why a common utiliza
 
 ![Queueing factor vs utilization](queueing-factor-vs-utilization.png)
 
-
 ## "But Our p99 Exploded!"
 
 Yes. Of course it did.
@@ -192,7 +188,6 @@ The following picture shows the behavior of various percentiles during a utiliza
 This is not a failure of the model. It is exactly what the model predicts.
 
 > **Tail latency is a utilization problem, not a mystery.**
-
 
 ## Numeric Example: The Cost of Utilization
 
@@ -229,7 +224,6 @@ $$
 
 At 80% utilization, the *queue* dominates the latency. Nothing is broken. **This is the expected cost of efficiency.**
 
-
 ## Same Load, Same Utilization: Different Variance
 
 At 70% utilization:
@@ -241,7 +235,6 @@ At 70% utilization:
 | 4.00                        | Heavy-tailed service   | 166 ms             |
 
 Variance is not evil. **But it is not free.**
-
 
 ## Retries: Variance Multipliers in Disguise, and Where They Happen Matters
 
@@ -287,7 +280,6 @@ A useful rule of thumb:
 
 Kingman's law does not forbid retries. It just tells you **which bill they add to**.
 
-
 ## Thread Pools vs Async: Physics Still Applies
 
 Async systems do not eliminate queueing. They relocate it.
@@ -298,7 +290,6 @@ Async systems do not eliminate queueing. They relocate it.
 Kingman's law applies equally to blocking threads, asynchronous pipelines, coroutines, and virtual threads. If a resource is finite and shared, it queues. Full stop.
 
 > **Async changes how you pay for waiting, not whether you pay.**
-
 
 ## Capacity Planning Without Superstition
 
@@ -320,7 +311,6 @@ But:
 
 That is engineering.
 
-
 ## The Cultural Shift This Enables
 
 Once teams internalize this:
@@ -338,7 +328,6 @@ to:
 > "We're at 78% utilization with high variance. This is expected".
 
 That is not lowering standards. It is raising understanding.
-
 
 ## Final Thought
 
