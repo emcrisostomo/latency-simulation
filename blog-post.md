@@ -28,8 +28,8 @@ It is an **accounting identity**.
 
 If your system:
 
-- receives work at rate **λ** (requests per second)
-- requires **E[S]** CPU-seconds per request
+- receives work at rate $\lambda$ (requests per second)
+- requires $E[S]$ CPU-seconds per request
 
 then utilization is:
 
@@ -39,7 +39,7 @@ $$
 
 This is not a choice.  It is a consequence.
 
-You don’t “decide” to run at 65% CPU any more than you decide gravity applies today. If load increases or service time grows, utilization increases. Full stop.
+You don’t “decide” to run at 65% CPU any more than you decide that the gravity force exists today. If load increases or service time grows, utilization increases. Full stop.
 
 The real choice engineers have is not *whether* there is utilization, but:
 
@@ -93,7 +93,7 @@ Where:
 - $c_a^2$ is arrival-time variability.
 - $c_s^2$ is service-time variability.
 
-Kingman's formula in an *approximation* that is asymptotically exact when $\rho\rightarrow 1$ and it applies to the GI/G/1 queue:
+Kingman's formula is an *approximation* that is asymptotically exact when $\rho\rightarrow 1$ and it applies to the GI/G/1 queue:
 
 | Component | Meaning                                 |
 |-----------|-----------------------------------------|
@@ -125,9 +125,9 @@ In other words: **most backend bottlenecks**.
 The reality of software systems is not so orderly and disciplined, and most production systems are not M/M/1 queues:
 
 * Requests are **bursty**: customers are noisy, scheduled batch jobs start, retries happen, GC pauses.
-* Service times have a **high variance**: cache hits vs. misses, service time highly influence by the size of the data set being processed, I/O activity, slow downstreams.
+* Service times have a **high variance**: cache hits vs. misses, service time is highly influenced by the size of the data set being processed, I/O activity, slow downstreams.
 
-Kingman's law gives us a way to reason about **latency inflation** without pretending the our world is exponential.
+Kingman's law gives us a way to reason about **latency inflation** without pretending our world is exponential.
 
 But what does this mean?
 
@@ -144,7 +144,7 @@ Pretending the world is exponential means pretending our intuitions are correct 
 This is _bad_ because it leads to:
 
 - **Overconfidence:** "Our average latency is low, we're fine!"
-- **Overcompensation:** "Latency variance is scary, let's scale up! (and keep utilisation low)"
+- **Overcompensation:** "Latency variance is scary, let's scale up! (and keep utilization low)"
 
 This _works_ (sort of)... at a huge cost, and little understanding.
 
@@ -236,12 +236,12 @@ This is why:
 - Tail latency becomes noisy under load.
 - Systems “feel flaky” **long** before averages change.
 
-The following picture show the behaviour of various percentiles during an utilization sweep from 0.2 to 0.9 for a load with a bimodal service time distribution (rare-slow) where the average service time is $E[S]=10$ ms, with 200.000 requests simulated. When $\rho=0.6$:
+The following picture shows the behaviour of various percentiles during an utilization sweep from 0.2 to 0.9 for a load with a bimodal service time distribution (rare-slow) where the average service time is $E[S]=10$ ms, with 200.000 requests simulated. When $\rho=0.6$:
 
 - The p50 has barely moved from $E[S]=10$ ms.
 - The p99 has skyrocketed at $140\cdot E[S]$.
 
-![Percentiles with a mixture dist during an utilisation sweep](sweep_mix.png)
+![Percentiles with a mixture dist during an utilization sweep](sweep_mix.png)
 
 This is not a failure of the model. It is exactly what the model predicts.
 
@@ -253,12 +253,14 @@ This is not a failure of the model. It is exactly what the model predicts.
 
 Let’s put numbers on this.
 
+**Note:** These values are mean queueing delays computed from Kingman’s approximation, not a simulation.
+
 Assume a single bottleneck (one CPU core, one DB connection, one worker).
 
 From production measurements:
 
-- Mean service time: **E[S] = 20 ms**
-- Standard deviation: **σ = 20 ms**
+- Mean service time: $E[S] = 20$ ms.
+- Standard deviation: $\sigma = 20$ ms.
 
 So service-time variability is:
 
