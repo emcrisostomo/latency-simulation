@@ -127,11 +127,11 @@ The reality of software systems is not so orderly and disciplined, and most prod
 * Requests are **bursty**: customers are noisy, scheduled batch jobs start, retries happen, GC pauses.
 * Service times have a **high variance**: cache hits vs. misses, service time is highly influenced by the size of the data set being processed, I/O activity, slow downstreams.
 
+*Latency inflation* is the phenomenon where **observed latency** (by the customer) is much larger than the service time. The gap between the two is latency inflation caused by *queueing*.
+
 Kingman's law gives us a way to reason about **latency inflation** without pretending our world is exponential.
 
 But what does this mean?
-
-_Latency inflation_ is the phenomenon where **observed latency** (by the customer) is much larger than the service time.  The gap between the two is latency inflation caused by _queueing_.
 
 > Latency inflation is not about slow code: it's about **waiting** before our code actually runs.
 
