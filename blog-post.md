@@ -39,7 +39,7 @@ $$
 
 This is not a choice.  It is a consequence.
 
-You don’t “decide” to run at 65% CPU any more than you decide that the gravity force exists today. If load increases or service time grows, utilization increases. Full stop.
+You don’t “decide” to run at 65% CPU any more than you decide that gravity exists today. If load increases or service time grows, utilization increases. Full stop.
 
 The real choice engineers have is not *whether* there is utilization, but:
 
@@ -104,8 +104,8 @@ In plain English, this is the mean waiting time in queue in a system with a sing
 
 So, this model is valid for:
 
-- **Many arrival distributions:** Poisson, bursty, scheduled, etc., as long as interarrival times are i.i.d. with finite variance (independent and not ultra-heavy-tailed).
-- **Many service distributions:** constant, log-normal, normal, etc., as long as service times are i.i.d. with finite variance (independent and not ultra-heavy-tailed).
+- **Many arrival distributions:** Poisson, bursty, scheduled, etc., as long as interarrival times are i.i.d. with finite variance (no infinite-variance tails).
+- **Many service distributions:** constant, log-normal, normal, etc., as long as service times are i.i.d. with finite variance (no infinite-variance tails).
 
 It is empirically _very accurate_ across a wide range of systems:
 
@@ -135,7 +135,7 @@ But what does this mean?
 
 > Latency inflation is not about slow code: it's about **waiting** before our code actually runs.
 
-Pretending the world is exponential means pretending our intuitions are correct when they are based on a model which is too simple:
+Pretending the world is exponential means pretending our intuitions are correct when they are based on a model that is too simple:
 
 - "But... average latency should scale linearly!"
 - "But... the CPU is not saturated, queues shouldn't be forming!"
@@ -154,7 +154,7 @@ Kingman's law gives us a third path: **quantitative realism**.
 
 ## What Kingman's Law Really Says, in Plain English
 
-This is dense, I know. Let's try to look at the formula under a different light:
+This is dense, I know. Let's try to look at the formula in a different light:
 
 $$
 \text{Queueing delay} \propto \frac{\rho}{1 - \rho} \cdot (\text{arrival variability} + \text{service variability}) \cdot \text{average service time}
@@ -236,7 +236,7 @@ This is why:
 - Tail latency becomes noisy under load.
 - Systems “feel flaky” **long** before averages change.
 
-The following picture shows the behaviour of various percentiles during a utilization sweep from 0.2 to 0.9 for a load with a bimodal service time distribution (rare-slow) where the average service time is $E[S]=10$ ms, with 200.000 requests simulated. When $\rho=0.6$:
+The following picture shows the behaviour of various percentiles during a utilization sweep from 0.2 to 0.9 for a load with a bimodal service time distribution (rare-slow) where the average service time is $E[S]=10$ ms, with 200,000 requests simulated. When $\rho=0.6$:
 
 - The p50 has barely moved from $E[S]=10$ ms.
 - The p99 has skyrocketed at $140\cdot E[S]$.
