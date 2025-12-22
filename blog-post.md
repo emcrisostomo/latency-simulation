@@ -290,7 +290,7 @@ To make this concrete, I simulated a toy comparison with $\rho$ swept and a 10% 
 
 This picture is likely an *underestimate* of real service-side impact. Real in-service retries often cost more than the original attempt, and real systems add extra variance (cache misses, downstream contention, I/O jitter) that make the tail fatter than this clean model.
 
-> This explains why, in general, we want to **shed load** at the server-side and implement retry logic at the client-side.
+> This explains why, in general, we want to **shed load** at the server-side and implement **retry** logic at the client-side.
 
 ## Thread Pools vs Async: Physics Still Applies
 
