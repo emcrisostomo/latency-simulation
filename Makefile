@@ -5,10 +5,8 @@ PIP_COMPILE = $(PIP_COMPILE_PATH) --strip-extras -r requirements.in
 
 .PHONY: create-venv
 create-venv:
-	if [[ ! -x $(VENV_PATH)/python ]] ; then \
-		python3 -m venv $(VENV_ROOT) ; \
-	fi
-	$(VENV_PATH)/pip install --upgrade pip setuptools
+	[[ -x $(VENV_PATH)/python ]] || python3 -m venv $(VENV_ROOT)
+	$(VENV_PATH)/pip install --upgrade pip setuptools wheel
 
 .PHONY: dependencies-compile
 dependencies-compile: pip-tools requirements.txt
