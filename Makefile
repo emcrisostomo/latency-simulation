@@ -61,4 +61,4 @@ run-retries-plot: dependencies-install
 
 .PHONY: pdf
 pdf:
-	pandoc -o blog-post.pdf blog-post.md --from markdown --syntax-highlighting=idiomatic --toc --toc-depth=2 --number-sections
+	pandoc -o blog-post.pdf blog-post.md --from markdown --toc --toc-depth=2 --number-sections
