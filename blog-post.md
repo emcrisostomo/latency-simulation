@@ -117,7 +117,7 @@ $$
 
 There are three terms. Three unavoidable facts. Three levers. And only **one** of them is under direct operational control.
 
-1. **Utilization creates non-linear latency increase.** As $\rho\rightarrow 1$, waiting time explodes even with zero variance.
+1. **Utilization creates non-linear latency increase.** As $\rho\rightarrow 1$, *sensitivity* to variance explodes; with zero variance, a deterministic queue has zero waiting for $\rho<1$ but becomes fragile at $\rho=1$.
 2. **Variance amplifies waiting times.** Variance doesn't create queues, it magnifies them once utilization is high.
 3. **Latency variance is not a bug.** It is a mathematical consequence of shared resources and utilization. You can only remove it by:
    - Overprovisioning.
@@ -165,7 +165,6 @@ A look at the plotted values for $\rho/(1-\rho)$ also shows why a common utiliza
 ## "But Our p99 Exploded!"
 
 Yes. Of course it did.
-
 Kingman's law estimates the *mean*, but queueing does not politely stay in the mean. Its effects show up first in the tail:
 
 - Stretching the right tail.
