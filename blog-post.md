@@ -358,7 +358,7 @@ That difference is not tooling. It is literacy.
 
 Up to this point, we’ve argued that **latency variance is expected** and that queueing delay is driven by **utilization multiplied by variability**.
 
-That argument only becomes operational once we can estimate the inputs — and in production, this is where things get uncomfortable.
+That argument only becomes operational once we can estimate the inputs, and in production, this is where things get uncomfortable.
 
 In real systems, we rarely observe full service-time distributions. What we usually have are **percentiles** (P50, P95, P99) exported by telemetry systems. Turning those into something usable for queueing analysis requires care, humility, and explicit assumptions.
 
@@ -383,7 +383,7 @@ C_s^2 = \frac{\mathrm{Var}(S)}{E[S]^2} = \left(\frac{\sigma}{\mu}\right)^2
 }
 $$
 
-This is not a cosmetic detail. Queueing delay scales with **variance**, not standard deviation. Confusing $C_s$ with $C_s^2$ systematically underestimates waiting time — often by a large factor.
+This is not a cosmetic detail. Queueing delay scales with **variance**, not standard deviation. Confusing $C_s$ with $C_s^2$ systematically underestimates waiting time, often by a large factor.
 
 ## Percentiles Are Not Variance
 
@@ -395,7 +395,7 @@ With only percentiles:
 
 Any attempt to estimate $C_s^2$ from percentiles therefore requires a **modeling assumption**.
 
-This is not a flaw — Kingman itself is an approximation. What matters is being explicit about the assumption instead of pretending the data is richer than it is.
+This is not a flaw; Kingman itself is an approximation. What matters is being explicit about the assumption instead of pretending the data is richer than it is.
 
 ## A Pragmatic Default: Log-Normal Service Times
 
@@ -483,7 +483,7 @@ $$
 \frac{P99}{P50} = 1.8 \;\Rightarrow\; \text{low variability}
 $$
 
-## Why Variability Barely Matters — Until It Suddenly Does
+## Why Variability Barely Matters... Until It Suddenly Does
 
 Kingman’s structure explains a common operational surprise:
 
@@ -498,7 +498,7 @@ $$
 
 does not forgive optimism. As utilization rises, variance that was previously invisible becomes decisive.
 
-This is why systems often appear healthy — until they very abruptly are not.
+This is why systems often appear healthy... until they very abruptly are not.
 
 ## Telemetry Caveats (Datadog and Similar Systems)
 
@@ -532,4 +532,4 @@ As a result, percentile-derived $C_s^2$ values should be treated as **lower boun
 > **Latency tails hurt you indirectly: through variability, and variability hurts you through queues.**
 
 The hardest part of applying queueing theory in production is not the math.  
-It is being honest about what our telemetry does — and does not — tell us.
+It is being honest about what our telemetry does, and does not, tell us.
