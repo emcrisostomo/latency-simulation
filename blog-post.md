@@ -55,7 +55,7 @@ E[W_q]
 \;\approx\;
 \frac{\rho}{1 - \rho}
 \cdot
-\frac{c_a^2 + c_s^2}{2}
+\frac{C_a^2 + C_s^2}{2}
 \cdot
 E[S]
 $$
@@ -64,8 +64,8 @@ Where:
 
 - $\rho = \lambda E[S]$ is utilization.
 - $E[S]$ is mean service time.
-- $c_a^2$ is arrival-time variability.
-- $c_s^2$ is service-time variability.
+- $C_a^2$ is arrival-time variability.
+- $C_s^2$ is service-time variability.
 
 Kingman's formula is an *approximation* that is asymptotically exact as $\rho\rightarrow 1$, and it applies to the GI/G/1 queue:
 
@@ -202,13 +202,13 @@ From production measurements:
 So service-time variability is:
 
 $$
-c_s^2 = \left(\frac{20}{20}\right)^2 = 1
+C_s^2 = \left(\frac{20}{20}\right)^2 = 1
 $$
 
 Arrivals are bursty (very normal in real systems):
 
 $$
-c_a^2 = 2.25
+C_a^2 = 2.25
 $$
 
 ### What happens as utilization increases?
@@ -227,7 +227,7 @@ At 80% utilization, the *queue* dominates the latency. Nothing is broken. **This
 
 At 70% utilization:
 
-| Service variability $c_s^2$ | Interpretation         | Mean total latency |
+| Service variability $C_s^2$ | Interpretation         | Mean total latency |
 |-----------------------------|------------------------|--------------------|
 | 0.25                        | Stable service         | 78 ms              |
 | 1.00                        | Typical mixed workload | 96 ms              |
@@ -251,7 +251,7 @@ From the queue's perspective:
 
 - The arrival rate $\lambda$ increases.
 - Arrivals become burstier.
-- Arrival-time variance $c_a^2$ grows.
+- Arrival-time variance $C_a^2$ grows.
 
 Even if each client's retry logic is deterministic, retries often **synchronize at the system level**: many callers observe the same slowdown and retry at the same time. That correlation is what makes retry storms so destructive.
 
@@ -264,7 +264,7 @@ When a service retries work *inside* the request handling path, no new arrival i
 From the queue's perspective:
 
 - The mean service time $E[S]$ grows.
-- The service-time variance $c_s^2$ widens.
+- The service-time variance $C_s^2$ widens.
 - Long requests block everything behind them.
 
 This manifests as heavier tails and p99 inflation even when arrivals are smooth.
@@ -322,6 +322,8 @@ But:
 
 That is engineering.
 
+If you want to apply this with real telemetry, see the practical appendix at the end for a worked path from percentiles to $C_s^2$.
+
 ## The Cultural Shift This Enables
 
 Once teams internalize this:
@@ -351,3 +353,183 @@ The goal of engineering is not to eliminate variance. Our job is to understand i
 When variance surprises you, you page people. When it doesn't, you plan.
 
 That difference is not tooling. It is literacy.
+
+## Practical Appendix: Estimating Variability from Percentiles
+
+Up to this point, we’ve argued that **latency variance is expected** and that queueing delay is driven by **utilization multiplied by variability**.
+
+That argument only becomes operational once we can estimate the inputs — and in production, this is where things get uncomfortable.
+
+In real systems, we rarely observe full service-time distributions. What we usually have are **percentiles** (P50, P95, P99) exported by telemetry systems. Turning those into something usable for queueing analysis requires care, humility, and explicit assumptions.
+
+## A Common Notation Trap: $C_s$ vs. $C_s^2$
+
+The coefficient of variation of service time $S$ is defined as:
+
+$$
+C_s = \frac{\sigma}{\mu}
+$$
+
+where:
+
+- $\mu = E[S]$ is the mean service time  
+- $\sigma = \sqrt{\mathrm{Var}(S)}$ is the standard deviation  
+
+Kingman’s formula, however, uses the **squared** coefficient of variation:
+
+$$
+\boxed{
+C_s^2 = \frac{\mathrm{Var}(S)}{E[S]^2} = \left(\frac{\sigma}{\mu}\right)^2
+}
+$$
+
+This is not a cosmetic detail. Queueing delay scales with **variance**, not standard deviation. Confusing $C_s$ with $C_s^2$ systematically underestimates waiting time — often by a large factor.
+
+## Percentiles Are Not Variance
+
+With only percentiles:
+
+- There is **no distribution-free way** to recover variance
+- Many radically different distributions can share the same P50 and P99
+- Queueing behavior can differ by orders of magnitude
+
+Any attempt to estimate $C_s^2$ from percentiles therefore requires a **modeling assumption**.
+
+This is not a flaw — Kingman itself is an approximation. What matters is being explicit about the assumption instead of pretending the data is richer than it is.
+
+## A Pragmatic Default: Log-Normal Service Times
+
+For many RPC-style services, a log-normal distribution is a reasonable first-order model:
+
+- Strictly positive support  
+- Naturally right-skewed  
+- Captures moderate tail behavior without infinite variance  
+
+Assume:
+
+$$
+S \sim \mathrm{LogNormal}(\mu_{\ln}, \sigma_{\ln}^2)
+$$
+
+Then:
+
+- Median:
+  $$
+  P50 = e^{\mu_{\ln}}
+  $$
+
+- 99th percentile:
+  $$
+  P99 = e^{\mu_{\ln} + \sigma_{\ln} z_{0.99}}, \quad z_{0.99} \approx 2.326
+  $$
+
+From observed percentiles:
+
+$$
+\sigma_{\ln} = \frac{\ln(P99) - \ln(P50)}{2.326}
+$$
+
+## From Percentiles to $C_s^2$ (and Why This Matters)
+
+For a log-normal distribution:
+
+$$
+\boxed{
+C_s^2 = e^{\sigma_{\ln}^2} - 1
+}
+$$
+
+The mean service time is:
+
+$$
+E[S] = P50 \cdot e^{\sigma_{\ln}^2 / 2}
+$$
+
+Two important implications:
+
+1. **$E[S]$ is almost always larger than P50**  
+   Using P50 directly in utilization calculations underestimates $\rho$.
+
+2. **Small percentile spreads imply low variability**  
+   A modest P99/P50 ratio often corresponds to near-deterministic service.
+
+## Worked Example
+
+Given:
+
+$$
+P50 = 5,\quad P99 = 9
+$$
+
+We estimate:
+
+$$
+\sigma_{\ln} \approx 0.25
+$$
+
+$$
+C_s^2 \approx e^{0.25^2} - 1 \approx 0.066
+$$
+
+$$
+E[S] \approx 5 \cdot e^{0.25^2 / 2} \approx 5.16
+$$
+
+This corresponds to **very low service-time variability**, much closer to deterministic or high-order Erlang behavior than to exponential service.
+
+A quick log-normal sanity check:
+
+$$
+\frac{P99}{P50} = 1.8 \;\Rightarrow\; \text{low variability}
+$$
+
+## Why Variability Barely Matters — Until It Suddenly Does
+
+Kingman’s structure explains a common operational surprise:
+
+- At low utilization, variability barely shows up
+- Near saturation, *even modest variability dominates latency*
+
+The amplification term:
+
+$$
+\frac{\rho}{1-\rho}
+$$
+
+does not forgive optimism. As utilization rises, variance that was previously invisible becomes decisive.
+
+This is why systems often appear healthy — until they very abruptly are not.
+
+## Telemetry Caveats (Datadog and Similar Systems)
+
+When estimating variability from production percentiles, several caveats apply:
+
+1. **Aggregated percentiles are not per-request percentiles**  
+   Host-level percentiles aggregated across instances compress tails.
+
+2. **Time-windowing smooths burstiness**  
+   Rolling windows hide short-term correlation and inflate apparent regularity.
+
+3. **Timeouts and clipping truncate tails**  
+   Hard cutoffs bias variance downward.
+
+4. **Cross-instance mixing masks heterogeneity**  
+   Fast and slow instances average out, while queues still experience the full variance.
+
+As a result, percentile-derived $C_s^2$ values should be treated as **lower bounds**, not precise measurements.
+
+## Practical Guidance
+
+- Percentiles alone are insufficient; assumptions must be explicit
+- Log-normal service times are a defensible default when data is sparse
+- Always estimate:
+  - $E[S]$, not just P50
+  - $C_s^2$, not just utilization
+- One additional percentile (P90 or P95) dramatically improves confidence
+
+## Key Takeaway
+
+> **Latency tails hurt you indirectly: through variability, and variability hurts you through queues.**
+
+The hardest part of applying queueing theory in production is not the math.  
+It is being honest about what our telemetry does — and does not — tell us.
