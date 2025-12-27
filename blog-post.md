@@ -360,7 +360,7 @@ Up to this point, we’ve argued that **latency variance is expected** and that 
 
 That argument only becomes operational once we can estimate the inputs, and in production, this is where things get uncomfortable.
 
-In real systems, we rarely observe full service-time distributions. What we usually have are **percentiles** (P50, P95, P99) exported by telemetry systems. Turning those into something usable for queueing analysis requires care, humility, and explicit assumptions.
+In real systems, we rarely observe full service-time distributions. What we usually have are **percentiles** (p50, p95, p99) exported by telemetry systems. Turning those into something usable for queueing analysis requires care, humility, and explicit assumptions.
 
 ## A Common Notation Trap: $C_s$ vs. $C_s^2$
 
@@ -390,7 +390,7 @@ This is not a cosmetic detail. Queueing delay scales with **variance**, not stan
 With only percentiles:
 
 - There is **no distribution-free way** to recover variance
-- Many radically different distributions can share the same P50 and P99
+- Many radically different distributions can share the same p50 and p99
 - Queueing behavior can differ by orders of magnitude
 
 Any attempt to estimate $C_s^2$ from percentiles therefore requires a **modeling assumption**.
@@ -415,18 +415,18 @@ Then:
 
 - Median:
   $$
-  P50 = e^{\mu_{\ln}}
+  p50 = e^{\mu_{\ln}}
   $$
 
 - 99th percentile:
   $$
-  P99 = e^{\mu_{\ln} + \sigma_{\ln} z_{0.99}}, \quad z_{0.99} \approx 2.326
+  p99 = e^{\mu_{\ln} + \sigma_{\ln} z_{0.99}}, \quad z_{0.99} \approx 2.326
   $$
 
 From observed percentiles:
 
 $$
-\sigma_{\ln} = \frac{\ln(P99) - \ln(P50)}{2.326}
+\sigma_{\ln} = \frac{\ln(p99) - \ln(p50)}{2.326}
 $$
 
 ## From Percentiles to $C_s^2$ (and Why This Matters)
@@ -442,23 +442,23 @@ $$
 The mean service time is:
 
 $$
-E[S] = P50 \cdot e^{\sigma_{\ln}^2 / 2}
+E[S] = p50 \cdot e^{\sigma_{\ln}^2 / 2}
 $$
 
 Two important implications:
 
-1. **$E[S]$ is almost always larger than P50**  
-   Using P50 directly in utilization calculations underestimates $\rho$.
+1. **$E[S]$ is almost always larger than p50**  
+   Using p50 directly in utilization calculations underestimates $\rho$.
 
 2. **Small percentile spreads imply low variability**  
-   A modest P99/P50 ratio often corresponds to near-deterministic service.
+   A modest p99/p50 ratio often corresponds to near-deterministic service.
 
 ## Worked Example
 
 Given:
 
 $$
-P50 = 5,\quad P99 = 9
+p50 = 5,\quad p99 = 9
 $$
 
 We estimate:
@@ -480,7 +480,7 @@ This corresponds to **very low service-time variability**, much closer to determ
 A quick log-normal sanity check:
 
 $$
-\frac{P99}{P50} = 1.8 \;\Rightarrow\; \text{low variability}
+\frac{p99}{p50} = 1.8 \;\Rightarrow\; \text{low variability}
 $$
 
 ## Why Variability Barely Matters... Until It Suddenly Does
@@ -523,9 +523,9 @@ As a result, percentile-derived $C_s^2$ values should be treated as **lower boun
 - Percentiles alone are insufficient; assumptions must be explicit
 - Log-normal service times are a defensible default when data is sparse
 - Always estimate:
-  - $E[S]$, not just P50
+  - $E[S]$, not just p50
   - $C_s^2$, not just utilization
-- One additional percentile (P90 or P95) dramatically improves confidence
+- One additional percentile (p90 or p95) dramatically improves confidence
 
 ## Key Takeaway
 
