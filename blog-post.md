@@ -435,30 +435,61 @@ Two important implications of the log-normal assumption:
 We observed the following percentiles in one of our production services:
 
 $$
-p50 = 5,\quad p99 = 9
+\left\{
+\begin{aligned}
+p50 &= 5 \\
+p99 &= 9
+\end{aligned}
+\right.
 $$
 
 Using the formulas described in the previous sections we can estimate $\sigma_{\ln}$, $C_s^2$ and $E[S]$:
 
 $$
-\sigma_{\ln} \approx 0.25
+\left\{
+\begin{aligned}
+\sigma_{\ln} &\approx 0.25 \\
+C_s^2 \approx e^{0.25^2} - 1 &\approx 0.066 \\
+E[S] \approx 5 \cdot e^{0.25^2 / 2} &\approx 5.16
+\end{aligned}
+\right.
 $$
-
-$$
-C_s^2 \approx e^{0.25^2} - 1 \approx 0.066
-$$
-
-$$
-E[S] \approx 5 \cdot e^{0.25^2 / 2} \approx 5.16
-$$
-
-This corresponds to **very low service-time variability**, much closer to deterministic or high-order Erlang behavior than to an exponential service.
 
 A quick log-normal sanity check:
 
 $$
 \frac{p99}{p50} = 1.8 \;\Rightarrow\; \text{low variability}
 $$
+
+This corresponds to **very low service-time variability**, much closer to deterministic or high-order Erlang behavior than to an exponential service.
+
+If production utilization is at most 20%, and we assume roughly Poisson arrivals ($C_a^2 \approx 1$), Kingman’s approximation gives:
+
+$$
+E[W_q] \approx \frac{0.2}{1-0.2} \cdot \frac{1 + 0.066}{2} \cdot 5.16 \approx 0.69
+$$
+
+So the expected queueing delay is under 1 ms, and total latency remains close to the service time.
+
+At 70% utilization with the same assumptions:
+
+$$
+E[W_q] \approx \frac{0.7}{1-0.7} \cdot \frac{1 + 0.066}{2} \cdot 5.16 \approx 6.41
+$$
+
+Queueing delay is now several milliseconds, and the queue starts to become visible.
+
+At $\rho = 70\%$, the expected total request time (the expected total time in system) is almost 12 ms:
+
+$$
+E[S] + E[W_q] \approx 5.16 + 6.41 \approx 11.57
+$$
+
+The next step for the team owning this service would be running load tests and verify this model holds at different $\rho$, and iteratively adjust model and estimations. When we are comfortable with the observed behaviour, the team could consider **running this service up to $\rho \approx 70\%$ and having latency fluctuate in the range [5, 12] ms**.
+
+A nice side-effect of this is that increasing $\rho$ three times in a CPU bounded system could result in a **reduction of provisioned CPU and related costs** of roughly three times. Obviously, this is a theoretical scenario that is accounting for no other resources being used by this service which could have other effects in how we provision this system.
+
+**Note:** This service is CPU-bound, and results are heavily cached with a cache hit ratio close to 100%. It was expected that it had a low $C_s^2$. I do not expect most of our services to exhibit such behaviour.
 
 ## Why Variability Barely Matters... Until It Suddenly Does
 
@@ -481,17 +512,10 @@ This is why systems often appear healthy... until they very abruptly are not.
 
 When estimating variability from production percentiles, several caveats apply:
 
-1. **Aggregated percentiles are not per-request percentiles**  
-   Host-level percentiles aggregated across instances compress tails.
-
-2. **Time-windowing smooths burstiness**  
-   Rolling windows hide short-term correlation and inflate apparent regularity.
-
-3. **Timeouts and clipping truncate tails**  
-   Hard cutoffs bias variance downward.
-
-4. **Cross-instance mixing masks heterogeneity**  
-   Fast and slow instances average out, while queues still experience the full variance.
+- **Aggregated percentiles are not per-request percentiles**: host-level percentiles aggregated across instances compress tails.
+- **Time-windowing smooths burstiness**: rolling windows hide short-term correlation and inflate apparent regularity.
+- **Timeouts and clipping truncate tails**: hard cutoffs bias variance downward.
+- **Cross-instance mixing masks heterogeneity**: fast and slow instances average out, while queues still experience the full variance.
 
 As a result, percentile-derived $C_s^2$ values should be treated as **lower bounds**, not precise measurements.
 
