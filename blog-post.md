@@ -354,6 +354,10 @@ When variance surprises you, you page people. When it doesn't, you plan.
 
 That difference is not tooling. It is literacy.
 
+And if you want one operational anchor, make it this: **saturation is the golden signal that translates utilization and variance into latency.** When saturation rises, the queueing term grows nonlinearly, and the tails follow.
+
+> **Watching saturation is how you tell when the math in this post is about to become your pager.**
+
 ## Practical Appendix: Estimating Variability from Percentiles
 
 Up to this point, we’ve argued that **latency variance is expected** and that queueing delay is driven by **utilization multiplied by variability**.
@@ -521,12 +525,11 @@ As a result, percentile-derived $C_s^2$ values should be treated as **lower boun
 
 ## Practical Guidance
 
-- Percentiles alone are insufficient; assumptions must be explicit
-- Log-normal service times are a defensible default when data is sparse
-- Always estimate:
-  - $E[S]$, not just p50
-  - $C_s^2$, not just utilization
-- One additional percentile (p90 or p95) dramatically improves confidence
+- Percentiles alone are insufficient: assumptions must be explicit.
+- Log-normal service times are a defensible default when data is sparse.
+- Always estimate $E[S]$, not just the median (p50).
+- Always estimate $C_s^2$, not just utilization $\rho$.
+- One additional percentile (p90 or p95) dramatically improves confidence.
 
 ## Key Takeaway
 
