@@ -370,98 +370,75 @@ $$
 C_s = \frac{\sigma}{\mu}
 $$
 
-where:
-
-- $\mu = E[S]$ is the mean service time  
-- $\sigma = \sqrt{\mathrm{Var}(S)}$ is the standard deviation  
+where $\mu = E[S]$ is the mean service time and $\sigma = \sqrt{\mathrm{Var}(S)}$ is the standard deviation.  
 
 Kingman’s formula, however, uses the **squared** coefficient of variation:
 
 $$
-\boxed{
 C_s^2 = \frac{\mathrm{Var}(S)}{E[S]^2} = \left(\frac{\sigma}{\mu}\right)^2
-}
 $$
 
 This is not a cosmetic detail. Queueing delay scales with **variance**, not standard deviation. Confusing $C_s$ with $C_s^2$ systematically underestimates waiting time, often by a large factor.
 
 ## Percentiles Are Not Variance
 
-With only percentiles:
+In production, percentiles are what we live with day to day. They are familiar, operationally useful, and often the only thing we can easily compare across services. But they are still a thin slice of the distribution, and that slice is not enough to recover variance.
 
-- There is **no distribution-free way** to recover variance
-- Many radically different distributions can share the same p50 and p99
-- Queueing behavior can differ by orders of magnitude
+With percentiles only:
 
-Any attempt to estimate $C_s^2$ from percentiles therefore requires a **modeling assumption**.
+- There is **no distribution-free way** to recover variance.
+- Many radically different distributions can share the same p50 and p99.
+- Queueing behavior can differ by orders of magnitude.
 
-This is not a flaw; Kingman itself is an approximation. What matters is being explicit about the assumption instead of pretending the data is richer than it is.
+Any attempt to estimate $C_s^2$ from percentiles therefore requires a **modeling assumption**. This is not a flaw; Kingman itself is an approximation. What matters is being explicit about the assumption instead of pretending the data is richer than it is.
 
 ## A Pragmatic Default: Log-Normal Service Times
 
-For many RPC-style services, a log-normal distribution is a reasonable first-order model:
+For many RPC-style services, a log-normal distribution is a reasonable first-order model since:
 
-- Strictly positive support  
-- Naturally right-skewed  
-- Captures moderate tail behavior without infinite variance  
+- It has strictly positive support.
+- It is naturally right-skewed.
+- It captures moderate tail behavior without infinite variance.
 
-Assume:
+Let's assume our service times exhibit a log-normal distribution and let's summarise some useful formulas:
 
 $$
 S \sim \mathrm{LogNormal}(\mu_{\ln}, \sigma_{\ln}^2)
 $$
 
-Then:
+Then the following hold:
 
-- Median:
-  $$
-  p50 = e^{\mu_{\ln}}
-  $$
+- The median is $\text{p50} = e^{\mu_{\ln}}$.
+- 99th percentile is $\text{p99} = e^{\mu_{\ln} + \sigma_{\ln} z_{0.99}}, \quad z_{0.99} \approx 2.326$.
 
-- 99th percentile:
-  $$
-  p99 = e^{\mu_{\ln} + \sigma_{\ln} z_{0.99}}, \quad z_{0.99} \approx 2.326
-  $$
-
-From observed percentiles:
+Combining these formulas and solving for $\sigma_{\ln}$ will allow us to get an estimation of $\sigma_{\ln}$ using percentiles gathered from production data:
 
 $$
-\sigma_{\ln} = \frac{\ln(p99) - \ln(p50)}{2.326}
+\sigma_{\ln} = \frac{\ln(\text{p99}) - \ln(\text{p50})}{2.326}
 $$
 
 ## From Percentiles to $C_s^2$ (and Why This Matters)
 
-For a log-normal distribution:
+Now that we have an estimation for $\sigma_{\ln}$ from percentiles, we can calculate an estimation of service time variability $C_s^2$ using the formulas for $E[S]$ and $\text{Var}(S)$ of a log-normal distribution (check them out in a Statistics book, or in [Wikipedia](https://en.wikipedia.org/wiki/Log-normal_distribution)):
 
 $$
-\boxed{
 C_s^2 = e^{\sigma_{\ln}^2} - 1
-}
 $$
 
-The mean service time is:
+Two important implications of the log-normal assumption:
 
-$$
-E[S] = p50 \cdot e^{\sigma_{\ln}^2 / 2}
-$$
+- **$E[S]$ is almost always larger than p50**: using p50 directly in utilization calculations underestimates $\rho$.
+- **Small percentile spreads imply low variability**: a modest p99/p50 ratio often corresponds to near-deterministic service.
 
-Two important implications:
+## A real-world example
 
-1. **$E[S]$ is almost always larger than p50**  
-   Using p50 directly in utilization calculations underestimates $\rho$.
-
-2. **Small percentile spreads imply low variability**  
-   A modest p99/p50 ratio often corresponds to near-deterministic service.
-
-## Worked Example
-
-Given:
+We observed the following percentiles in one of our production services:
 
 $$
 p50 = 5,\quad p99 = 9
 $$
 
-We estimate:
+Using the formulas described in the previous sections we can estimate $\sigma_{\ln}$, $C_s^2$ and $E[S]$:
 
 $$
 \sigma_{\ln} \approx 0.25
@@ -475,7 +452,7 @@ $$
 E[S] \approx 5 \cdot e^{0.25^2 / 2} \approx 5.16
 $$
 
-This corresponds to **very low service-time variability**, much closer to deterministic or high-order Erlang behavior than to exponential service.
+This corresponds to **very low service-time variability**, much closer to deterministic or high-order Erlang behavior than to an exponential service.
 
 A quick log-normal sanity check:
 
