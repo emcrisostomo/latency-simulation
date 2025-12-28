@@ -135,12 +135,284 @@ A nice side-effect of this is that increasing $\rho$ three times in a CPU bounde
 
 **Note:** This service is CPU-bound, and results are heavily cached with a cache hit ratio close to 100%. It was expected that it had a low $C_s^2$. I do not expect most of our services to exhibit such behaviour.
 
+## Another Real-World Example: When the Median Lies
+
+Let’s now ground the discussion with a concrete production example.  
+Consider a service for which we observe the following percentiles:
+
+$$
+\left\{
+\begin{aligned}
+p50 &= 47 \\
+p75 &= 81 \\
+p99 &= 316
+\end{aligned}
+\right.
+$$
+
+At first glance, this may look *acceptable*. The median is well below 50, the 75th percentile is still under 100, and even the 99th percentile, while noticeably higher, does not look outrageous in isolation.
+
+This is exactly the kind of distribution that routinely passes informal "latency smell tests".
+And yet, from a queueing perspective, it already contains all the ingredients for instability under load.
+
+### Step 1: Ratios Tell the First Story
+
+Before reaching for formulas, it is useful to look at **percentile ratios**, which provide a fast intuition for variability:
+
+$$
+\frac{\text{p75}}{\text{p50}} \approx 1.72
+$$
+
+$$
+\frac{\text{p99}}{\text{p50}} \approx 6.7
+$$
+
+This tells us two things:
+
+- Variability is already present well before the extreme tail (p75 is not close to p50).
+- The tail extends roughly **7 times the median**, which is enough to matter for queues.
+
+This is not a pathological distribution, but it is also very far from deterministic.
+
+### Step 2: Is This a "Nice" Distribution?
+
+With three percentiles, we can now do something we could not do before: **check whether a single-shape model is plausible**.
+
+Assuming a log-normal service-time distribution, we can independently estimate the spread parameter $\sigma_{\ln}$ from different percentile pairs:
+
+$$
+\sigma_{\ln} =
+\frac{\ln(p_p) - \ln(P_{50})}{z_p}
+$$
+
+Using:
+
+- $z_{0.75} \approx 0.674$
+- $z_{0.99} \approx 2.326$
+
+We obtain:
+
+- From p50 and p75:
+  $$
+  \sigma_{\ln} \approx 0.81
+  $$
+- From p50 and p99:
+  $$
+  \sigma_{\ln} \approx 0.82
+  $$
+- From p75 and p99:
+  $$
+  \sigma_{\ln} \approx 0.82
+  $$
+
+These estimates are remarkably consistent.
+
+This matters: it tells us that **the tail is not being driven by a rare, separate pathology** (e.g. occasional GC pauses or retries), but by a fairly uniform, systemic variability across requests.
+
+In other words, this service is *honestly variable*.
+
+### Step 3: What Kingman's Law Actually Cares About
+
+From $\sigma_{\ln}$ we can compute the quantity Kingman's law needs: the **squared coefficient of variation** of service time.
+
+For a log-normal distribution:
+
+$$
+C_s^2 = e^{\sigma_{\ln}^2} - 1
+$$
+
+Plugging in $\sigma_{\ln} \approx 0.82$:
+
+$$
+C_s^2 \approx 0.95
+$$
+
+This number deserves attention.
+
+- $C_s^2 = 0$: deterministic service.
+- $C_s^2 = 1$: exponential service (M/M/1).
+- $C_s^2 \gg 1$: heavy-tailed or pathological.
+
+This service sits **almost exactly at exponential variability**.
+That alone is enough to make queues dangerous near saturation.
+
+### Step 4: The Mean Is Not the Median
+
+Kingman's law also depends on the *mean* service time, not the median.
+
+For a log-normal distribution:
+
+$$
+E[S] = \text{p50} \cdot e^{\sigma_{\ln}^2 / 2}
+$$
+
+Which gives:
+
+$$
+E[S] \approx 65.6
+$$
+
+This is a crucial correction:
+
+- Median: 47.  
+- Mean: $\approx 66$.  
+
+If utilization is computed using the median, as is often done implicitly, **$\rho$ is understated by ~40%**.
+This error compounds brutally once queues form.
+
+### Step 5: What This Implies for Queueing Delay
+
+Assuming arrival variability is roughly Poisson-like at the relevant timescale ($C_a^2 \approx 1$), Kingman’s approximation becomes:
+
+$$
+E[W_q] \approx
+\frac{\rho}{1-\rho}
+\cdot
+\frac{1 + 0.95}{2}
+\cdot
+65.6
+\;\approx\;
+0.98 \cdot \frac{\rho}{1-\rho} \cdot 65.6
+$$
+
+Even without extreme utilization, waiting time grows rapidly:
+
+- $\rho = 0.6 \Rightarrow E[W_q] \approx 96$
+- $\rho = 0.7 \Rightarrow E[W_q] \approx 150$
+- $\rho = 0.8 \Rightarrow E[W_q] \approx 256$
+- $\rho = 0.9 \Rightarrow E[W_q] \approx 575$
+
+At this point, **queueing delay dominates total latency**, even though the raw service-time percentiles looked "reasonable".
+
+### The Deceptive Comfort of the Median
+
+This example illustrates a recurring failure mode in real systems:
+
+> *The median looks fine.  
+> The service looks healthy.  
+> And yet the system collapses under load.*
+
+Nothing mysterious is happening.
+
+- Variability is moderate but real.
+- The mean is substantially higher than the median.
+- Utilization creeps up.
+- Kingman’s law $\rho/(1-\rho)$ term does the rest.
+
+This is not an edge case.  
+This is what "normal" variability looks like in production services.
+
+### Takeaway
+
+> You do not need extreme tails for queues to hurt you.  
+> You only need variability plus load.
+
+Percentiles already encode this information, but only if we read them through the lens of queueing theory, rather than as isolated SLO artifacts.
+
+## Arrival Variability: Why $C_a^2 \approx 1$ Is Usually Optimistic
+
+In the previous back-of-the-envelope calculations, we implicitly assumed that inter-arrival times were roughly Poisson, i.e.:
+
+$$
+C_a^2 \approx 1
+$$
+
+This is a convenient baseline. It is also, in most real systems, **optimistic**.
+
+Poisson arrivals correspond to a world in which requests arrive independently, smoothly, and without coordination. Very few production systems behave this way once they are under any meaningful load.
+
+### Why Real Traffic Is Rarely Poisson
+
+In practice, arrivals are shaped by multiple reinforcing mechanisms:
+
+- **User synchronization**: humans react to the same events, refresh the same pages, and click the same buttons at roughly the same time.
+- **Fan-out and aggregation**: one upstream request often fans out into many downstream requests, creating correlated bursts.
+- **Retries and timeouts**: when latency increases, retries inject *additional* load precisely when the system is least able to absorb it.
+- **Cron jobs and background work**: periodic tasks align in time, creating predictable spikes.
+- **Autoscaling and cold starts**: scaling events change concurrency in steps, not smoothly.
+
+Each of these effects increases **burstiness**, not just average rate.
+
+### The Queueing Consequence of Burstiness
+
+From Kingman’s perspective, burstiness enters through $C_a^2$:
+
+$$
+E[W_q] \;\approx\;
+\frac{\rho}{1-\rho}
+\cdot
+\frac{C_a^2 + C_s^2}{2}
+\cdot
+E[S]
+$$
+
+If service-time variability is already close to exponential ($C_s^2 \approx 1$), then any increase in $C_a^2$ directly multiplies waiting time.
+
+For example:
+
+- If $C_a^2 = 1$ (Poisson), the variability multiplier is:
+  $$
+  \frac{1 + 1}{2} = 1
+  $$
+- If $C_a^2 = 4$ (moderate burstiness), it becomes:
+  $$
+  \frac{4 + 1}{2} = 2.5
+  $$
+
+Nothing else changes. The system simply waits **2.5 times longer**.
+
+### Why This Shows Up as "Sudden" Failure
+
+This is why systems often appear stable up to a point and then fail abruptly:
+
+- As utilization increases, queues form.
+- Queues increase latency.
+- Latency triggers retries and synchronization.
+- Retries increase burstiness.
+- Burstiness increases $C_a^2$.
+- Higher $C_a^2$ further amplifies queueing delay.
+
+The feedback loop is multiplicative, not additive.
+From the outside, it looks like a step function.  
+From the inside, it is entirely predictable.
+
+### Why Arrival Variability Is Harder to See Than Service Variability
+
+Service-time variability leaves a clear fingerprint in percentiles. Arrival variability does not. Dashboards typically show:
+
+- Request rate.
+- Latency percentiles.
+- Error rates.
+
+They rarely show:
+
+- Inter-arrival distributions.
+- Burstiness at sub-second scales.
+- Correlation across clients or tiers.
+
+As a result, $C_a^2$ is often **invisible until it hurts**.
+
+### Practical Implication
+
+When doing queueing analysis from production telemetry:
+
+> Assume $C_a^2 > 1$ unless you have strong evidence otherwise.
+
+This is not pessimism; it is realism.
+
+If your system behaves well even with $C_a^2 \gg 1$, it will behave extremely well when traffic is smooth. The reverse is not true.
+
+> **Service-time variability determines how queues *can* hurt you.**
+> **Arrival variability determines how often they *will*.**
+
+Ignoring $C_a^2$ is one of the most common reasons teams underestimate how close they are to the cliff.
+
 ## Why Variability Barely Matters... Until It Suddenly Does
 
 Kingman’s structure explains a common operational surprise:
 
-- At low utilization, variability barely shows up
-- Near saturation, *even modest variability dominates latency*
+- At low utilization, variability barely shows up.
+- Near saturation, *even modest variability dominates latency*.
 
 The amplification term:
 
