@@ -60,6 +60,10 @@ run-retries-plot: dependencies-install
 	$(VENV_PATH)/python sweep_plot.py --sweep retries --dist const --mean-ms 10 --retry-p 0.3 --rho-min 0.2 --rho-max 0.7 --rho-step 0.05 --out sweep_retries.png --n 500000
 
 .PHONY: pdf
-pdf:
+pdf: blog-post.pdf practical-appendix.pdf
+
+blog-post.pdf: blog-post.md
 	pandoc -o blog-post.pdf          blog-post.md          --from markdown --toc --toc-depth=2 --number-sections
+
+practical-appendix.pdf: practical-appendix.md
 	pandoc -o practical-appendix.pdf practical-appendix.md --from markdown --toc --toc-depth=2 --number-sections
