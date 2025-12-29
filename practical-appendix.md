@@ -74,15 +74,16 @@ Two important implications of the log-normal assumption:
 - **$E[S]$ is almost always larger than p50**: using p50 directly in utilization calculations underestimates $\rho$.
 - **Small percentile spreads imply low variability**: a modest p99/p50 ratio often corresponds to near-deterministic service.
 
-## A real-world example
+## A Real-World Example
 
-We observed the following percentiles in one of our production services:
+Let's now ground the discussion with a concrete production example.
+We observed the following percentiles in one of our production services (units of measure will be omitted in calculation from now on):
 
 $$
 \left\{
 \begin{aligned}
-p50 &= 5 \\
-p99 &= 9
+\text{p50} &= 5\ \text{ms}\\
+\text{p99} &= 9\ \text{ms}
 \end{aligned}
 \right.
 $$
@@ -137,15 +138,14 @@ A nice side-effect of this is that increasing $\rho$ three times in a CPU bounde
 
 ## Another Real-World Example: When the Median Lies
 
-Let’s now ground the discussion with a concrete production example.  
-Consider a service for which we observe the following percentiles:
+Let's now consider a service for which we observe the following percentiles:
 
 $$
 \left\{
 \begin{aligned}
-p50 &= 47 \\
-p75 &= 81 \\
-p99 &= 316
+\text{p50} &= 47\ \text{ms}\\
+\text{p75} &= 81\ \text{ms}\\
+\text{p99} &= 316\ \text{ms}
 \end{aligned}
 \right.
 $$
@@ -182,7 +182,7 @@ Assuming a log-normal service-time distribution, we can independently estimate t
 
 $$
 \sigma_{\ln} =
-\frac{\ln(p_p) - \ln(P_{50})}{z_p}
+\frac{\ln(\text{p}_p) - \ln(\text{p50})}{z_p}
 $$
 
 Using:
@@ -206,7 +206,6 @@ We obtain:
   $$
 
 These estimates are remarkably consistent.
-
 This matters: it tells us that **the tail is not being driven by a rare, separate pathology** (e.g. occasional GC pauses or retries), but by a fairly uniform, systemic variability across requests.
 
 In other words, this service is *honestly variable*.
@@ -238,7 +237,8 @@ That alone is enough to make queues dangerous near saturation.
 
 **Note:** More formally, when service time is the product of many small, independent sources of jitter, its logarithm becomes a sum of random variables and converges toward a normal distribution.
 The resulting service times are approximately log-normal: positive and right-skewed.
-For realistic parameters, this puts the squared coefficient of variation near 1, meaning that from a queueing perspective the service behaves close to exponential, which is the natural default unless variability is actively suppressed.
+This is the reason why we started our discussion by *hypothesizing* service times were log-normally distributed.
+For realistic parameters, this often puts the squared coefficient of variation near 1, meaning that from a queueing perspective the service behaves *close* to exponential, which is the natural default unless variability is actively suppressed.
 
 Said another way:
 
@@ -247,7 +247,6 @@ Said another way:
 ### Step 4: The Mean Is Not the Median
 
 Kingman's law also depends on the *mean* service time, not the median.
-
 For a log-normal distribution:
 
 $$
@@ -262,8 +261,8 @@ $$
 
 This is a crucial correction:
 
-- Median: 47.  
-- Mean: $\approx 66$.  
+- Median: $\text{p50} = 47$ ms.  
+- Mean: $\mu \approx 66$ ms.  
 
 If utilization is computed using the median, as is often done implicitly, **$\rho$ is understated by ~40%**.
 This error compounds brutally once queues form.
@@ -273,14 +272,10 @@ This error compounds brutally once queues form.
 Assuming arrival variability is roughly Poisson-like at the relevant timescale ($C_a^2 \approx 1$), Kingman’s approximation becomes:
 
 $$
-E[W_q] \approx
-\frac{\rho}{1-\rho}
-\cdot
-\frac{1 + 0.95}{2}
-\cdot
-65.6
-\;\approx\;
-0.98 \cdot \frac{\rho}{1-\rho} \cdot 65.6
+\begin{aligned}
+E[W_q] &\approx \frac{\rho}{1-\rho} \cdot \frac{1 + 0.95}{2} \cdot 65.6\\
+       &\approx 0.98 \cdot \frac{\rho}{1-\rho} \cdot 65.6
+\end{aligned}
 $$
 
 Even without extreme utilization, waiting time grows rapidly:
@@ -307,13 +302,13 @@ Nothing mysterious is happening.
 - Utilization creeps up.
 - Kingman’s law $\rho/(1-\rho)$ term does the rest.
 
-This is not an edge case.  
+This is not an edge case.
 This is what "normal" variability looks like in production services.
 
 ### Takeaway
 
-> You do not need extreme tails for queues to hurt you.  
-> You only need variability plus load.
+You do not need extreme tails for queues to hurt you.
+You only need variability plus load.
 
 Percentiles already encode this information, but only if we read them through the lens of queueing theory, rather than as isolated SLO artifacts.
 
