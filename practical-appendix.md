@@ -236,6 +236,14 @@ This number deserves attention.
 This service sits **almost exactly at exponential variability**.
 That alone is enough to make queues dangerous near saturation.
 
+**Note:** More formally, when service time is the product of many small, independent sources of jitter, its logarithm becomes a sum of random variables and converges toward a normal distribution.
+The resulting service times are approximately log-normal: positive and right-skewed.
+For realistic parameters, this puts the squared coefficient of variation near 1, meaning that from a queueing perspective the service behaves close to exponential, which is the natural default unless variability is actively suppressed.
+
+Said another way:
+
+> **This is what you get when *nothing* in the system actively smooths or shapes work.**
+
 ### Step 4: The Mean Is Not the Median
 
 Kingman's law also depends on the *mean* service time, not the median.
