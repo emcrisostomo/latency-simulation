@@ -209,3 +209,5 @@ __marimo__/
 requirements.txt
 *.csv
 *.png
+blog-post.pdf
+practical-appendix.pdf
