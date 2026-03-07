@@ -1,32 +1,28 @@
-VENV_ROOT = .venv
-VENV_PATH = $(VENV_ROOT)/bin
-PIP_COMPILE_PATH = $(VENV_PATH)/pip-compile
-PIP_COMPILE = $(PIP_COMPILE_PATH) --strip-extras -r requirements.in
+UV ?= uv
+VENV_ROOT ?= .venv
+VENV_PATH := $(VENV_ROOT)/bin
+VENV_PYTHON := $(VENV_PATH)/python
+
+.PHONY: default
+default: dependencies-install
 
 .PHONY: create-venv
 create-venv:
-	[[ -x $(VENV_PATH)/python ]] || python3 -m venv $(VENV_ROOT)
-	$(VENV_PATH)/pip install --upgrade pip setuptools wheel
+	[ -x "$(VENV_PYTHON)" ] || $(UV) venv $(VENV_ROOT)
 
 .PHONY: dependencies-compile
-dependencies-compile: pip-tools requirements.txt
+dependencies-compile: requirements.txt
 
-.PHONY: pip-tools
-pip-tools:
-	if [[ ! -x $(PIP_COMPILE_PATH) ]] ; then \
-		$(VENV_PATH)/pip install pip-tools ; \
-	fi  
-
-requirements.txt: requirements.in
-	$(PIP_COMPILE)
+requirements.txt: requirements.in | create-venv
+	$(UV) pip compile --python $(VENV_PYTHON) requirements.in -o requirements.txt
 
 .PHONY: dependencies-install
-dependencies-install: dependencies-compile
-	$(VENV_PATH)/pip install -r requirements.txt
+dependencies-install: requirements.txt | create-venv
+	$(UV) pip sync --python $(VENV_PYTHON) requirements.txt
 
 .PHONY: requirements-update
-requirements-update:
-	$(PIP_COMPILE)
+requirements-update: | create-venv
+	$(UV) pip compile --upgrade --python $(VENV_PYTHON) requirements.in -o requirements.txt
 
 # Run a simulation with a rare-slow mixture distribution to generate data for the blog
 .PHONY: run-rare-slow-mixture-simulation
